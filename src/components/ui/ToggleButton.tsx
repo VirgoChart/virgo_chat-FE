@@ -24,7 +24,7 @@ const ToggleButton = ({ onClick, value, defaultToggle }: ToggleButtonProps) => {
     <div
       className={cn(
         "inline-block pointer-events-auto h-6 w-11 rounded-full p-1 ring-1 ring-inset transition duration-200 ease-in-out ring-black/20 hover:cursor-pointer",
-        formatToggle ? "bg-primary-900" : "bg-[white]"
+        formatToggle ? "bg-primary" : "bg-[white]"
       )}
       onClick={handleToggle}
     >

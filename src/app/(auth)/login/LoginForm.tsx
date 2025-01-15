@@ -73,11 +73,19 @@ const LoginForm = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/google`;
+  };
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="mx-auto flex flex-col gap-3">
-          <Input name="email" label="Email" placeholder="Email" />
+          <Input
+            name="email"
+            label="Số điện thoại"
+            placeholder="Số điện thoại"
+          />
           <InputPassword
             name="password"
             label="Mật khẩu"
@@ -93,7 +101,7 @@ const LoginForm = () => {
           <span
             className={cn(
               "text-sm ml-2",
-              isRememberAccount ? "text-primary-900" : "text-dark-400"
+              isRememberAccount ? "text-primary" : "text-dark-400"
             )}
           >
             Lưu đăng nhập
@@ -110,28 +118,30 @@ const LoginForm = () => {
           </Spin>
 
           <div className="font-bold text-dark-200 text-sm py-5 relative">
-            <span className="bg-white relative z-10 px-5 text-base">Hoặc</span>
+            <span className="bg-white relative z-10 px-5 text-base rounded-lg">
+              Hoặc
+            </span>
             <div className="absolute bottom-[50%] left-0 w-full h-px bg-dark-200"></div>
           </div>
 
-          <Button className="bg-white w-full mx-auto hover:bg-white-900 mb-2 border border-dark-200">
+          <Button
+            className="bg-white w-full mx-auto hover:bg-white-900 mb-2 border border-dark-200"
+            onClick={handleGoogleLogin}
+          >
             <Google />
             <span className="w-[80%] text-dark-400">Đăng nhập với Google</span>
           </Button>
 
           <Link
             href={PATH.FORGET_PASSWORD}
-            className="text-sm text-primary-900 font-bold mt-2"
+            className="text-sm text-primary font-bold mt-2"
           >
             Quên mật khẩu?
           </Link>
 
           <span className="text-sm text-dark-400 mt-2">
             Bạn chưa có tài khoản?
-            <Link
-              href={PATH.REGISTER}
-              className="text-primary-900 font-bold ml-1"
-            >
+            <Link href={PATH.REGISTER} className="text-primary font-bold ml-1">
               Đăng kí ngay
             </Link>
           </span>

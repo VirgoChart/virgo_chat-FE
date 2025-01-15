@@ -20,28 +20,20 @@ const menus = [
     link: "#",
   },
   {
-    name: "Sản phẩm",
+    name: "Tin nhắn",
     link: "#",
     icon: <DownAngle />,
   },
   {
-    name: "Tin tức",
+    name: "Thông báo",
     link: "#",
   },
   {
-    name: "Vouncher",
+    name: "Kho lưu trữ",
     link: "#",
   },
   {
-    name: "Combo tặng thưởng",
-    link: "#",
-  },
-  {
-    name: "Sản phẩm bán chạy",
-    link: "#",
-  },
-  {
-    name: "Sản phẩm nổi bật",
+    name: "Danh sách chặn",
     link: "#",
   },
 ];
@@ -49,12 +41,12 @@ const menus = [
 const Header = () => {
   return (
     <header>
-      <div className="bg-primary-900 text-white py-4 top-0 z-10 xl:block hidden">
+      <div className="bg-primary text-white py-4 top-0 z-10 xl:block hidden">
         <div className="flex justify-between items-center">
           <div className="container-base flex justify-between">
             <div className="flex gap-20 items-center">
               <Link href="#" className="text-sm flex gap-1 items-center">
-                <Envelope className="mr-1" /> Ecommerce@gmail.com
+                <Envelope className="mr-1" /> VirgoChat@gmail.com
               </Link>
 
               <Link href="#" className="text-sm flex gap-1 items-center">
@@ -71,9 +63,7 @@ const Header = () => {
 
       <div className="hidden py-2 bg-white xl:block container-base">
         <div className="flex justify-between items-center">
-          <Link href="/">
-            <LogoFurniture />
-          </Link>
+          <Link href="/">VirgoChat</Link>
 
           <div className="hidden gap-3 xl:flex">
             {menus.map((item, index) => (
@@ -90,7 +80,7 @@ const Header = () => {
 
           <Input
             variant="standard"
-            placeholder="Tìm kiếm sản phẩm"
+            placeholder="Tìm kiếm tin nhắn"
             error=""
             icon={<Search className="text-primary-900" />}
             className="xl:w-[230px] xxl:w-[320px]"
@@ -101,11 +91,6 @@ const Header = () => {
               <Favorite fill="none" className="text-white w-7 h-7" />
               <span className="text-primary-900">Đã lưu</span>
             </Link>
-
-            <Link className="flex flex-col items-center" href="/cart">
-              <CartShopping className="text-primary-200 w-5 h-5 mt-1" />
-              <span className="text-primary-900 mt-1">Giỏ hàng</span>
-            </Link>
           </div>
         </div>
       </div>
@@ -114,7 +99,7 @@ const Header = () => {
         <HeaderNav menus={menus} />
 
         <Link href="/">
-          <LogoFurniture className="text-primary-600 ml-8" />
+          <div className="text-primary text-2xl ml-8">VirgoChat</div>
         </Link>
 
         <UserAction />

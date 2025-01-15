@@ -53,6 +53,8 @@ export const resetPassword = (data: { newPassword: string; token: string }) => {
   return axiosRequest.post("/auth/forgot-password/reset-password", data);
 };
 
+export const loginGoogle = () => {};
+
 const authAPI = {
   login,
   register,
