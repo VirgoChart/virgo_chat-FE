@@ -12,14 +12,10 @@ import { toast } from "react-toastify";
 import { GoBlocked } from "react-icons/go";
 import { AutoComplete, Input, Modal } from "antd";
 import { FaRegMessage } from "react-icons/fa6";
-import { on } from "events";
 import { useAuthStore } from "../store/useAuthStore";
 
 const Navbar = () => {
   const { logOut, connectSocket } = useAuthStore();
-  useEffect(() => {
-    connectSocket();
-  }, []);
 
   const router = useRouter();
   const user =

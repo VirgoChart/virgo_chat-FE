@@ -73,14 +73,23 @@ export const useAuthStore = create((set, get) => ({
     const authUser = JSON.parse(window.localStorage.getItem("authUser"));
     if (!authUser) return;
 
+    const existingSocket = get().socket;
+
+    if (existingSocket && existingSocket.connected) {
+      return;
+    }
+
     const socket = io(BU, {
       query: {
         userId: authUser._id,
       },
     });
 
-    socket.connect();
-    set({ socket: socket });
+    set({ socket });
+
+    socket.on("connect", () => {
+      console.log("Socket connected");
+    });
 
     socket.on("getOnlineUsers", (userIds) => {
       if (userIds) {
@@ -91,11 +100,19 @@ export const useAuthStore = create((set, get) => ({
     socket.on("newNotification", (notification) => {
       toast.success(notification.content);
     });
+
+    socket.on("disconnect", () => {
+      console.log("Socket disconnected");
+      set({ socket: null });
+    });
   },
 
   disconnectSocket: () => {
-    if (get().socket?.connected) {
-      get().socket.disconnect();
+    const socket = get().socket;
+    if (socket?.connected) {
+      socket.disconnect();
+      console.log("Socket disconnected");
+      set({ socket: null });
     }
 
     window.addEventListener("beforeunload", () => {

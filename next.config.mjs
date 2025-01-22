@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: false,
   async headers() {
     if (process.env.NEXT_ENV === process.env.NEXT_ENV_PROD) {
       return [
