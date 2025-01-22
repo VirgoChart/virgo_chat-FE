@@ -1,154 +1,219 @@
 "use client";
 
 import { useState } from "react";
+import { useAuthStore } from "@/store/useAuthStore";
+import AuthImagePattern from "@/components/AuthImagePattern";
 import Link from "next/link";
-import * as yup from "yup";
-import { useForm, SubmitHandler, FormProvider } from "react-hook-form";
+import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { cn } from "@/config/utils";
-import Input from "@/components/ui/Input";
-import { Eye, EyeInvisible, Google } from "@/components/icons";
-import ToggleButton from "@/components/ui/ToggleButton";
-import Button from "@/components/ui/Button";
-import { PATH } from "@/constants/paths";
-import Spin from "@/components/ui/Spin";
-import { login, setTokenServer } from "@/apis/auth";
-import { EMAIL_REGEX } from "@/constants";
-import {
-  EMAIL_REQUIRED_MESSAGE,
-  EMAIL_INVALID_MESSAGE,
-  PASSWORD_REQUIRED_MESSAGE,
-  PASSWORD_MIN_LENGTH_MESSAGE,
-  MIN_PASSWORD_LENGTH,
-} from "@/constants/validate";
-import { successToast } from "@/utils/toast";
-import InputPassword from "@/components/ui/InputPassword";
+import axiosRequest from "@/config/axios";
+import { toast } from "react-toastify";
+import { useGoogleLogin } from "@react-oauth/google";
+import { Google } from "@/components/icons";
+import { TbFaceId } from "react-icons/tb";
+import FaceID from "@/components/FaceID";
+import UpdateFaceIDModal from "@/components/UpdateFaceID";
 
-const schema = yup
-  .object({
-    email: yup
-      .string()
-      .required(EMAIL_REQUIRED_MESSAGE)
-      .matches(EMAIL_REGEX, EMAIL_INVALID_MESSAGE),
-    password: yup
-      .string()
-      .required(PASSWORD_REQUIRED_MESSAGE)
-      .min(MIN_PASSWORD_LENGTH, PASSWORD_MIN_LENGTH_MESSAGE),
-  })
-  .required();
-
-interface IFormInput {
-  email: string;
-  password: string;
-}
-
-const LoginForm = () => {
-  const [isShowPassword, setIsShowPassword] = useState(false);
-  const [isRememberAccount, setIsRememberAccount] = useState(false);
-  const [message, setMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-
-  const methods = useForm<IFormInput>({
-    resolver: yupResolver(schema),
-    mode: "onBlur",
+const LoginPage = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
   });
+  const [isFaceIDModalOpen, setIsFaceIDModalOpen] = useState(false);
 
-  const { handleSubmit } = methods;
+  const { login, isLoggingIn } = useAuthStore();
 
-  const onSubmit: SubmitHandler<IFormInput> = async (dataLogin) => {
-    setIsLoading(true);
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
     try {
-      const { data } = await login(dataLogin);
-      setMessage("");
-
-      await setTokenServer(data);
-      successToast("Đăng nhập thành công");
+      const res = await axiosRequest.post("/auth/login", formData, {
+        withCredentials: true,
+      });
+      console.log(res);
+      localStorage.setItem("authUser", JSON.stringify(res));
+      toast.success("Đăng nhập thành công");
       router.push("/");
-    } catch (error: any) {
-      setMessage(error);
+    } catch (error) {
+      console.error(error);
+      toast.error("Đã xảy ra lỗi");
     } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/google`;
+  const responseGoogle = async (response: any) => {
+    if (response.code) {
+      try {
+        const res = await axiosRequest.post(
+          "/auth/login/google",
+          {
+            code: response["code"],
+          },
+          { withCredentials: true }
+        );
+        localStorage.setItem("authUser", JSON.stringify(res.data));
+        toast.success("Đăng nhập thành công");
+        router.push("/");
+      } catch (error: any) {
+        toast.error(error);
+      }
+    } else {
+      console.error("Google login did not return a valid credential.");
+    }
   };
 
+  const gg = useGoogleLogin({
+    onSuccess: responseGoogle,
+    onError: responseGoogle,
+    flow: "auth-code",
+  });
+
+  const router = useRouter();
+
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="mx-auto flex flex-col gap-3">
-          <Input
-            name="email"
-            label="Số điện thoại"
-            placeholder="Số điện thoại"
-          />
-          <InputPassword
-            name="password"
-            label="Mật khẩu"
-            placeholder="Mật khẩu"
-          />
-        </div>
-
-        <div className="flex items-center mx-auto my-4">
-          <ToggleButton
-            defaultToggle={false}
-            onClick={() => setIsRememberAccount(!isRememberAccount)}
-          />
-          <span
-            className={cn(
-              "text-sm ml-2",
-              isRememberAccount ? "text-primary" : "text-dark-400"
-            )}
-          >
-            Lưu đăng nhập
-          </span>
-        </div>
-
-        <div className="text-sm text-red-900 mb-2">{message}</div>
-
-        <div className="text-center mx-auto flex flex-col">
-          <Spin isLoading={isLoading} className="text-dark-300 fill-blue-800">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              Đăng nhập
-            </Button>
-          </Spin>
-
-          <div className="font-bold text-dark-200 text-sm py-5 relative">
-            <span className="bg-white relative z-10 px-5 text-base rounded-lg">
-              Hoặc
-            </span>
-            <div className="absolute bottom-[50%] left-0 w-full h-px bg-dark-200"></div>
+    <div className="h-screen grid lg:grid-cols-2">
+      {/* Left Side - Form */}
+      <div className="flex flex-col justify-center items-center">
+        <div className="w-full max-w-md space-y-8">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <div className="flex flex-col items-center gap-2 group">
+              <div
+                className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20
+              transition-colors"
+              >
+                <MessageSquare className="w-6 h-6 text-primary" />
+              </div>
+              <h1 className="text-2xl font-bold mt-2 text-[#7480FF]">
+                Chào mừng trở lại
+              </h1>
+              <p className="text-base-content/60 text-[#7480FF]">
+                Đăng nhập vào tài khoản của bạn
+              </p>
+            </div>
           </div>
 
-          <Button
-            className="bg-white w-full mx-auto hover:bg-white-900 mb-2 border border-dark-200"
-            onClick={handleGoogleLogin}
-          >
-            <Google />
-            <span className="w-[80%] text-dark-400">Đăng nhập với Google</span>
-          </Button>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium text-blue-700">
+                  Email
+                </span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-base-content/40" />
+                </div>
+                <input
+                  type="email"
+                  className={`input input-bordered w-full pl-10 bg-white-500`}
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
+              </div>
+            </div>
 
-          <Link
-            href={PATH.FORGET_PASSWORD}
-            className="text-sm text-primary font-bold mt-2"
-          >
-            Quên mật khẩu?
-          </Link>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium text-blue-700">
+                  Mật khẩu
+                </span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-base-content/40" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className={`input input-bordered w-full pl-10 bg-white-500`}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5 text-base-content/40" />
+                  ) : (
+                    <Eye className="h-5 w-5 text-base-content/40" />
+                  )}
+                </button>
+              </div>
+            </div>
 
-          <span className="text-sm text-dark-400 mt-2">
-            Bạn chưa có tài khoản?
-            <Link href={PATH.REGISTER} className="text-primary font-bold ml-1">
-              Đăng kí ngay
-            </Link>
-          </span>
+            <div className="flex gap-2 flex-col">
+              <button
+                type="submit"
+                className="btn btn-primary w-full text-lg text-white-700"
+                disabled={isLoggingIn}
+              >
+                {isLoggingIn ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Đang tải...
+                  </>
+                ) : (
+                  "Đăng nhập"
+                )}
+              </button>
+
+              <button
+                onClick={() => setIsFaceIDModalOpen(true)}
+                className="px-4 py-3 bg-red-200 flex items-center justify-center gap-4"
+              >
+                <TbFaceId size={30} />
+                <span> Đăng nhập bằng FaceID</span>
+              </button>
+
+              <button
+                onClick={gg}
+                className="px-4 py-2 rounded-lg bg-red-200 flex items-center justify-center gap-4"
+              >
+                <Google />
+                <span>Đăng nhập bằng google</span>
+              </button>
+            </div>
+          </form>
+
+          <div className="text-center">
+            <p className="text-base-content/60 text-blue-700">
+              Chưa có tải khoản?{" "}
+              <Link href="/register" className="link link-primary">
+                Tạo tài khoản ngay
+              </Link>
+            </p>
+          </div>
+
+          <div className="text-center -mt-6">
+            <p className="text-base-content/60 text-blue-700">
+              Quên mật khẩu{" "}
+              <Link href="/forget-password" className="link link-primary">
+                Reset mật khẩu ngay
+              </Link>
+            </p>
+          </div>
         </div>
-      </form>
-    </FormProvider>
+      </div>
+
+      {isFaceIDModalOpen && <FaceID />}
+
+      {/* Right Side - Image/Pattern */}
+      <AuthImagePattern
+        title={"Chào mừng"}
+        subtitle={
+          "Đăng nhập để tiếp tục sử dụng dịch vụ tin nhắn và kết nối với bạn bè"
+        }
+      />
+    </div>
   );
 };
-
-export default LoginForm;
+export default LoginPage;

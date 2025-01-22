@@ -9,7 +9,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Button from "@/components/ui/Button";
 import { PATH } from "@/constants/paths";
 import Spin from "@/components/ui/Spin";
-import { resetPassword } from "@/apis/auth";
 import {
   PASSWORD_REQUIRED_MESSAGE,
   PASSWORD_MIN_LENGTH_MESSAGE,
@@ -18,8 +17,8 @@ import {
   PASSWORD_CONFIRMATION_MATCH_MESSAGE,
 } from "@/constants/validate";
 
-import { getParams } from "@/utils/getParams";
 import InputPassword from "@/components/ui/InputPassword";
+import axiosRequest from "@/config/axios";
 
 const schema = yup
   .object({
@@ -42,6 +41,7 @@ interface IResetPasswordForm {
 const ResetPasswordForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const email = JSON.parse(window.localStorage.getItem("emailChangePass"));
 
   const router = useRouter();
 
@@ -52,17 +52,17 @@ const ResetPasswordForm = () => {
   const { handleSubmit } = methods;
 
   const onSubmit = async (data: IResetPasswordForm) => {
-    const token = getParams("token");
-
-    if (!token) {
-      setMessage("Token không hợp lệ!");
-      return;
-    }
-
     setIsLoading(true);
     const { newPassword } = data;
     try {
-      await resetPassword({ newPassword, token });
+      await axiosRequest.put(
+        "/auth/reset-password/",
+        {
+          email: email,
+          newPassword: newPassword,
+        },
+        { withCredentials: true }
+      );
       setMessage("Mật khẩu đã được đặt lại thành công.");
       router.push(PATH.LOGIN);
     } catch (error: any) {
@@ -80,11 +80,13 @@ const ResetPasswordForm = () => {
             name="newPassword"
             label="Mật khẩu mới"
             placeholder="Mật khẩu mới"
+            className="bg-white-700"
           />
           <InputPassword
             name="confirmPassword"
             label="Xác nhận mật khẩu"
             placeholder="Xác nhận mật khẩu"
+            className="bg-white-700"
           />
         </div>
 

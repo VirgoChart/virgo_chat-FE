@@ -1,15 +1,14 @@
+import FacebookScript from "@/app/FacebookScript";
 import LoginForm from "./LoginForm";
-const loginformbg = "@/images/loginformbg.webp";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const Login = () => {
   return (
-    <div className="bg-white-500 p-4 rounded-lg">
-      <div className="text-primary text-xl font-bold text-center">
-        Chào mừng đến với HBChat
-      </div>
-      <div className="text-primary text-center my-2">Đăng nhập</div>
-
-      <LoginForm />
+    <div className="bg-white-500 rounded-lg">
+      <FacebookScript />
+      <GoogleOAuthProvider clientId="808422189889-loiulqip064p4v6rjcb5lujcch70f6jo.apps.googleusercontent.com">
+        <LoginForm />
+      </GoogleOAuthProvider>
     </div>
   );
 };

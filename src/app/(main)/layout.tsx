@@ -1,7 +1,6 @@
 import Footer from "@/layouts/Footer";
-import Header from "@/layouts/Header";
 import { ReactNode } from "react";
-import Authentication from "@/components/organisms/Authentication";
+import Navbar from "@/components/Navbar";
 
 export default function MainLayout({
   children,
@@ -9,11 +8,12 @@ export default function MainLayout({
   children: ReactNode;
 }>) {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <div className="flex flex-1 flex-col">{children}</div>
-      <Authentication />
-      <Footer />
+    <div>
+      <div className="flex flex-col min-h-screen">
+        <Navbar />
+        <div className="flex flex-1 flex-col">{children}</div>
+        {/* <Footer /> */}
+      </div>
     </div>
   );
 }
