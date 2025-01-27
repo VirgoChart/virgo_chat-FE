@@ -13,9 +13,10 @@ import { GoBlocked } from "react-icons/go";
 import { AutoComplete, Input, Modal } from "antd";
 import { FaRegMessage } from "react-icons/fa6";
 import { useAuthStore } from "../store/useAuthStore";
+import NotificationDropdown from "./NotificationDropdown";
 
 const Navbar = () => {
-  const { logOut, connectSocket } = useAuthStore();
+  const { logOut, socket } = useAuthStore();
 
   const router = useRouter();
   const user =
@@ -108,13 +109,13 @@ const Navbar = () => {
   const sendMessageRequest = async () => {
     try {
       const res = await axiosRequest.post(
-        "/notifications/private/create",
+        "/notifications/create",
         {
-          receiverId: userInfo._id,
+          receiverIds: [userInfo._id],
+          roomType: "private",
         },
         { withCredentials: true }
       );
-      console.log(res);
     } catch (error: any) {
       toast.error(error);
     }
@@ -214,6 +215,7 @@ const Navbar = () => {
                 </button>
               </>
             )}
+            <NotificationDropdown socket={socket} />
           </div>
         </div>
       </div>

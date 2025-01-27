@@ -1,5 +1,4 @@
 import axiosRequest from "@/config/axios";
-import { disconnect } from "process";
 import { toast } from "react-toastify";
 import { create } from "zustand";
 import { io } from "socket.io-client";
@@ -101,6 +100,10 @@ export const useAuthStore = create((set, get) => ({
       toast.success(notification.content);
     });
 
+    socket.on("newMessage", (message) => {
+      toast.success(message.content);
+    });
+
     socket.on("disconnect", () => {
       console.log("Socket disconnected");
       set({ socket: null });
@@ -115,10 +118,10 @@ export const useAuthStore = create((set, get) => ({
       set({ socket: null });
     }
 
-    window.addEventListener("beforeunload", () => {
-      if (socket) {
-        socket.disconnect();
-      }
-    });
+    // window.addEventListener("beforeunload", () => {
+    //   if (socket) {
+    //     socket.disconnect();
+    //   }
+    // });
   },
 }));

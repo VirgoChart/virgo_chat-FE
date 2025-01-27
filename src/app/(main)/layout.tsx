@@ -5,13 +5,14 @@ import { ReactNode, useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Loader } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import Sidebar from "@/components/Sidebar";
 
 export default function MainLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const { disconnectSocket, connectSocket } = useAuthStore();
+  const { disconnectSocket, connectSocket, socket } = useAuthStore();
   const [user, setUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
 
@@ -27,17 +28,17 @@ export default function MainLayout({
     if (onlineUsersData) setOnlineUsers(JSON.parse(onlineUsersData));
   }, []);
 
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      disconnectSocket();
-    };
+  // useEffect(() => {
+  //   const handleBeforeUnload = () => {
+  //     disconnectSocket();
+  //   };
 
-    window.addEventListener("beforeunload", handleBeforeUnload);
+  //   window.addEventListener("beforeunload", handleBeforeUnload);
 
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [disconnectSocket]);
+  //   return () => {
+  //     window.removeEventListener("beforeunload", handleBeforeUnload);
+  //   };
+  // }, [disconnectSocket]);
 
   console.log("Online users: ", onlineUsers);
 
@@ -52,8 +53,10 @@ export default function MainLayout({
     <div>
       <div className="flex flex-col min-h-screen">
         <Navbar />
+
+        <Sidebar socket={socket} />
         <div className="flex flex-1 flex-col">{children}</div>
-        {/* <Footer /> */}
+        <Footer />
       </div>
     </div>
   );
