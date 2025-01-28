@@ -2,6 +2,8 @@
 
 import AuthImagePattern from "@/components/AuthImagePattern";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useGoogleLogin } from "@react-oauth/google";
+import { Google } from "@/components/icons";
 
 import {
   Eye,
@@ -17,6 +19,7 @@ import { toast } from "react-toastify";
 import axiosRequest from "@/config/axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -121,121 +124,179 @@ export default function RegisterForm() {
     }
   };
 
+  const responseGoogle = async (response: any) => {
+    if (response.code) {
+      try {
+        const res = await axiosRequest.post(
+          "/auth/login/google",
+          {
+            code: response["code"],
+          },
+          { withCredentials: true }
+        );
+        localStorage.setItem("authUser", JSON.stringify(res.data));
+        toast.success("Đăng nhập thành công");
+        router.push("/");
+      } catch (error: any) {
+        toast.error(error);
+      }
+    } else {
+      console.error("Google login did not return a valid credential.");
+    }
+  };
+
+  const gg = useGoogleLogin({
+    onSuccess: responseGoogle,
+    onError: responseGoogle,
+    flow: "auth-code",
+  });
+
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
+    <div
+      className="min-h-screen grid lg:grid-cols-2"
+      style={{
+        backgroundImage: "url('/images/bg-left.png')",
+        backgroundSize: "cover",
+      }}
+    >
       {/* left */}
-      <div className="flex flex-col justify-center items-center p-6 sm:p-12">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center mb-8"></div>
-          <div className="flex flex-col items-center gap-2 group">
-            <div className="size-12 bg-white-400 rounded-xl bg-primary flex items-center justify-center transition-colors">
-              <MessageSquare className="size-6 text-primary"></MessageSquare>
-            </div>
-            <h1 className="text-lg text-[#E0ABE5] font-bold">Tạo tài khoản</h1>
-            <p className="text-md">Bắt đầu với tài khoản free</p>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6 p-4 w-4/5">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Tên đầy đủ</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <User className="size-5 text-base-content/40" />
-              </div>
-              <input
-                type="text"
-                className={`input input-bordered w-full pl-10 bg-white-400`}
-                placeholder="Nhập tên đầy đủ"
-                value={formData.fullName}
-                onChange={(e) =>
-                  setFormData({ ...formData, fullName: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">Email</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none bg-white-400">
-                <Mail className="size-5 text-white-700" />
-              </div>
-              <input
-                type="email"
-                className={`input input-bordered w-full pl-10 bg-white-400 rounded-l-lg`}
-                placeholder="Nhập email của bạn"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-medium">Mật khẩu</span>
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="size-5 text-base-content/40" />
-              </div>
-              <input
-                type={showPass ? "text" : "password"}
-                className={`input input-bordered w-full pl-10 bg-white-400`}
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowPass(!showPass)}
-              >
-                {showPass ? (
-                  <EyeOff className="size-5 text-base-content/40" />
-                ) : (
-                  <Eye className="size-5 text-base-content/40" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary w-full text-lg"
-            disabled={isSigningUp}
-          >
-            {isSigningUp ? (
-              <>
-                <Loader2 className="size-5 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Tạo tài khoản"
-            )}
-          </button>
-        </form>
-
-        <div className="text-center flex items-center gap-2">
-          <p className="text-base-content/60">Đã có tài khoản? </p>
-          <Link href="/login" className="hover:underline text-blue-700">
-            Đăng nhập ngay
-          </Link>
-        </div>
-      </div>
 
       <AuthImagePattern
         title="Tham gia cộng đồng"
         subtitle="Kết nối quá facebook"
       ></AuthImagePattern>
+
+      {/* right */}
+      <div className="flex items-center justify-center">
+        <div className="flex flex-col w-4/5 justify-center items-center p-6 bg-[#FEFEFE] rounded-lg">
+          <div className="w-full max-w-md space-y-8">
+            <div className="flex flex-col items-center mb-8">
+              <div className="bg-transparent rounded-xl flex items-center justify-center transition-colors p-0">
+                <Image
+                  className="object-cover p-0"
+                  src="/images/logoVirgo.png"
+                  width={120}
+                  height={120}
+                  alt="Virgo"
+                />
+              </div>
+              <h1 className="text-2xl text-[#8361B7] font-bold">
+                Chào mừng bạn đến với{" "}
+                <span className="text-[#FED93F]">VirgoChat</span>
+              </h1>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className=" w-full">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Tên đầy đủ</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <User className="size-5 text-base-content/40" />
+                </div>
+                <input
+                  type="text"
+                  className={`input input-bordered w-full pl-10 bg-white-400`}
+                  placeholder="Nguyễn Văn A"
+                  value={formData.fullName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, fullName: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium">Email</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none bg-white-400">
+                  <Mail className="size-5 text-white-700" />
+                </div>
+                <input
+                  type="email"
+                  className={`input input-bordered w-full pl-10 bg-white-400 rounded-l-lg`}
+                  placeholder="abc@gmail.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="form-control w-full">
+              <label className="label">
+                <span className="label-text font-medium">Mật khẩu</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="size-5 text-base-content/40" />
+                </div>
+                <input
+                  type={showPass ? "text" : "password"}
+                  className={`input input-bordered w-full pl-10 bg-white-400`}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPass(!showPass)}
+                >
+                  {showPass ? (
+                    <EyeOff className="size-5 text-base-content/40" />
+                  ) : (
+                    <Eye className="size-5 text-base-content/40" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary w-full text-lg mt-4"
+              disabled={isSigningUp}
+            >
+              {isSigningUp ? (
+                <>
+                  <Loader2 className="size-5 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                "Tạo tài khoản"
+              )}
+            </button>
+          </form>
+
+          <div className="flex items-center w-full my-4">
+            <div className="flex-1 border-t border-gray-300"></div>
+            <span className="px-4 text-gray-500 text-sm font-medium">Hoặc</span>
+            <div className="flex-1 border-t border-gray-300"></div>
+          </div>
+
+          <button
+            onClick={gg}
+            className="px-4 py-2 w-full rounded-lg bg-red-200 flex items-center justify-center gap-4"
+          >
+            <Google />
+            <span>Đăng nhập bằng google</span>
+          </button>
+
+          <div className="text-center flex items-center gap-2 mt-4">
+            <p className="text-base-content/60">Đã có tài khoản? </p>
+            <Link href="/login" className="hover:underline text-blue-700">
+              Đăng nhập ngay
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {isModalOpen && (
         <div className="modal modal-open bg-dark-300">

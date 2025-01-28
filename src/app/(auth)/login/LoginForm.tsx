@@ -12,7 +12,6 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { Google } from "@/components/icons";
 import { TbFaceId } from "react-icons/tb";
 import FaceID from "@/components/FaceID";
-import UpdateFaceIDModal from "@/components/UpdateFaceID";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);

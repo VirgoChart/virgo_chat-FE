@@ -1,4 +1,6 @@
 "use client";
+import Image from "next/image";
+import React from "react";
 
 interface IProps {
   title?: string;
@@ -7,21 +9,22 @@ interface IProps {
 
 const AuthImagePattern = ({ title, subtitle }: IProps) => {
   return (
-    <div className="hidden lg:flex items-center justify-center bg-[#E6A6E8]">
+    <div className="hidden lg:flex flex-col items-center justify-center">
       <div className="max-w-md text-center">
-        <div className="grid grid-cols-3 gap-3 mb-8">
-          {[...Array(9)].map((_, i) => (
-            <div
-              key={i}
-              className={`aspect-square rounded-2xl bg-primary/10 ${
-                i % 2 === 0 ? "animate-pulse" : ""
-              }`}
-            />
-          ))}
-        </div>
-        <h2 className="text-2xl font-bold mb-4">{title}</h2>
-        <p className="text-base-content/60 text-blue-500">{subtitle}</p>
+        <Image
+          src="/images/illustration.png"
+          width={400}
+          height={400}
+          alt="Illustration"
+          className="object-cover"
+        />
       </div>
+
+      <h1 className="text-[#FFDA43] text-5xl">VirgoChat</h1>
+
+      <p className="text-[#E8E7E7] text-xl mt-4">
+        -- Trò chuyện dễ dàng kết nối dài lâu --
+      </p>
     </div>
   );
 };
