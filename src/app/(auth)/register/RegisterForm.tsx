@@ -168,7 +168,7 @@ export default function RegisterForm() {
 
       {/* right */}
       <div className="flex items-center justify-center">
-        <div className="flex flex-col w-4/5 justify-center items-center p-6 bg-[#FEFEFE] rounded-lg">
+        <div className="flex flex-col w-3/5 justify-center items-center p-6 bg-[#FEFEFE] border-2 border-[#F977F7] rounded-lg">
           <div className="w-full max-w-md space-y-8">
             <div className="flex flex-col items-center mb-8">
               <div className="bg-transparent rounded-xl flex items-center justify-center transition-colors p-0">
@@ -198,7 +198,7 @@ export default function RegisterForm() {
                 </div>
                 <input
                   type="text"
-                  className={`input input-bordered w-full pl-10 bg-white-400`}
+                  className={`input input-bordered w-full pl-10 bg-white`}
                   placeholder="Nguyễn Văn A"
                   value={formData.fullName}
                   onChange={(e) =>
@@ -213,12 +213,12 @@ export default function RegisterForm() {
                 <span className="label-text font-medium">Email</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none bg-white-400">
+                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none bg-white">
                   <Mail className="size-5 text-white-700" />
                 </div>
                 <input
                   type="email"
-                  className={`input input-bordered w-full pl-10 bg-white-400 rounded-l-lg`}
+                  className={`input input-bordered w-full pl-10 bg-white rounded-l-lg`}
                   placeholder="abc@gmail.com"
                   value={formData.email}
                   onChange={(e) =>
@@ -238,7 +238,7 @@ export default function RegisterForm() {
                 </div>
                 <input
                   type={showPass ? "text" : "password"}
-                  className={`input input-bordered w-full pl-10 bg-white-400`}
+                  className={`input input-bordered w-full pl-10 bg-white`}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) =>
@@ -261,7 +261,7 @@ export default function RegisterForm() {
 
             <button
               type="submit"
-              className="btn btn-primary w-full text-lg mt-4"
+              className="btn btn-primary w-full text-white font-medium text-lg mt-4"
               disabled={isSigningUp}
             >
               {isSigningUp ? (
@@ -281,13 +281,13 @@ export default function RegisterForm() {
             <div className="flex-1 border-t border-gray-300"></div>
           </div>
 
-          <button
+          <div
             onClick={gg}
-            className="px-4 py-2 w-full rounded-lg bg-red-200 flex items-center justify-center gap-4"
+            className="px-4 cursor-pointer hover:opacity-75 py-2 w-full rounded-lg bg-white border-2 border-[#8361B7] flex items-center justify-center gap-4"
           >
             <Google />
             <span>Đăng nhập bằng google</span>
-          </button>
+          </div>
 
           <div className="text-center flex items-center gap-2 mt-4">
             <p className="text-base-content/60">Đã có tài khoản? </p>
@@ -321,7 +321,7 @@ export default function RegisterForm() {
                   <input
                     type="text"
                     placeholder="Nhập OTP"
-                    className="input input-bordered w-full max-w-xs"
+                    className="input input-bordered w-full max-w-xs bg-white"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                   />

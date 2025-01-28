@@ -3,11 +3,11 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const Login = () => {
   return (
-    <div className="bg-white-500 rounded-lg">
+    <>
       <GoogleOAuthProvider clientId="808422189889-loiulqip064p4v6rjcb5lujcch70f6jo.apps.googleusercontent.com">
         <LoginForm />
       </GoogleOAuthProvider>
-    </div>
+    </>
   );
 };
 

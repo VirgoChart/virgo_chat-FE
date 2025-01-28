@@ -12,6 +12,8 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { Google } from "@/components/icons";
 import { TbFaceId } from "react-icons/tb";
 import FaceID from "@/components/FaceID";
+import Image from "next/image";
+import { Checkbox } from "antd";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -57,7 +59,7 @@ const LoginPage = () => {
         toast.error(error);
       }
     } else {
-      console.error("Google login did not return a valid credential.");
+      console.error("Google không trả về mã code hoặc có lỗi xảy ra");
     }
   };
 
@@ -70,10 +72,22 @@ const LoginPage = () => {
   const router = useRouter();
 
   return (
-    <div className="h-screen grid lg:grid-cols-2">
-      {/* Left Side - Form */}
-      <div className="flex flex-col justify-center items-center">
-        <div className="w-full max-w-md space-y-8">
+    <div
+      className="min-h-screen grid lg:grid-cols-2"
+      style={{
+        backgroundImage: "url('/images/bg-left.png')",
+        backgroundSize: "cover",
+      }}
+    >
+      <AuthImagePattern
+        title={"Chào mừng"}
+        subtitle={
+          "Đăng nhập để tiếp tục sử dụng dịch vụ tin nhắn và kết nối với bạn bè"
+        }
+      />
+
+      <div className="flex flex-col justify-center items-center w-full">
+        <div className="w-4/5 bg-[#FEFEFE] border-2 border-[#F977F7] rounded-lg px-6 py-4 max-w-md">
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex flex-col items-center gap-2 group">
@@ -81,14 +95,18 @@ const LoginPage = () => {
                 className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20
               transition-colors"
               >
-                <MessageSquare className="w-6 h-6 text-primary" />
+                <Image
+                  className="object-cover p-0"
+                  src="/images/logoVirgo.png"
+                  width={120}
+                  height={120}
+                  alt="Virgo"
+                />
               </div>
-              <h1 className="text-2xl font-bold mt-2 text-[#7480FF]">
-                Chào mừng trở lại
+              <h1 className="text-2xl text-[#8361B7] font-bold">
+                Chào mừng bạn trở lại với{" "}
+                <span className="text-[#FED93F]">VirgoChat</span>
               </h1>
-              <p className="text-base-content/60 text-[#7480FF]">
-                Đăng nhập vào tài khoản của bạn
-              </p>
             </div>
           </div>
 
@@ -96,9 +114,7 @@ const LoginPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium text-blue-700">
-                  Email
-                </span>
+                <span className="label-text font-medium">Email</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,7 +122,7 @@ const LoginPage = () => {
                 </div>
                 <input
                   type="email"
-                  className={`input input-bordered w-full pl-10 bg-white-500`}
+                  className={`input input-bordered w-full pl-10 bg-white`}
                   placeholder="you@example.com"
                   value={formData.email}
                   onChange={(e) =>
@@ -118,9 +134,7 @@ const LoginPage = () => {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text font-medium text-blue-700">
-                  Mật khẩu
-                </span>
+                <span className="label-text font-medium">Mật khẩu</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -128,7 +142,7 @@ const LoginPage = () => {
                 </div>
                 <input
                   type={showPassword ? "text" : "password"}
-                  className={`input input-bordered w-full pl-10 bg-white-500`}
+                  className={`input input-bordered w-full pl-10 bg-white`}
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) =>
@@ -149,10 +163,22 @@ const LoginPage = () => {
               </div>
             </div>
 
+            <div className="flex justify-between items-center">
+              <div className="flex gap-2 items-center justify-center">
+                <Checkbox />
+                <span>Lưu mật khẩu?</span>
+              </div>
+              <div className="text-center self-end">
+                <Link href="/forget-password" className="link link-primary">
+                  Quên mật khẩu
+                </Link>
+              </div>
+            </div>
+
             <div className="flex gap-2 flex-col">
               <button
                 type="submit"
-                className="btn btn-primary w-full text-lg text-white-700"
+                className="btn btn-primary font-normal w-full text-lg text-white"
                 disabled={isLoggingIn}
               >
                 {isLoggingIn ? (
@@ -165,53 +191,41 @@ const LoginPage = () => {
                 )}
               </button>
 
-              <button
+              <div
                 onClick={() => setIsFaceIDModalOpen(true)}
-                className="px-4 py-3 bg-red-200 flex items-center justify-center gap-4"
+                className="hover:text-white hover:bg-red-400 hover:border-white transition-colors px-4 py-3 hover:opacity-95 border-2 border-red-200 flex items-center justify-center gap-4 rounded-lg cursor-pointer"
               >
-                <TbFaceId size={30} />
+                <TbFaceId
+                  size={30}
+                  className="text-[#7480FF] hover:text-white-200"
+                />
                 <span> Đăng nhập bằng FaceID</span>
-              </button>
+              </div>
 
-              <button
+              <div
                 onClick={gg}
-                className="px-4 py-2 rounded-lg bg-red-200 flex items-center justify-center gap-4"
+                className="hover:opacity-75 cursor-pointer px-4 py-2 rounded-lg border-2 border-[#8361B7] flex items-center justify-center gap-4"
               >
                 <Google />
                 <span>Đăng nhập bằng google</span>
-              </button>
+              </div>
             </div>
           </form>
 
-          <div className="text-center">
-            <p className="text-base-content/60 text-blue-700">
-              Chưa có tải khoản?{" "}
-              <Link href="/register" className="link link-primary">
-                Tạo tài khoản ngay
-              </Link>
-            </p>
-          </div>
-
-          <div className="text-center -mt-6">
-            <p className="text-base-content/60 text-blue-700">
-              Quên mật khẩu{" "}
-              <Link href="/forget-password" className="link link-primary">
-                Reset mật khẩu ngay
-              </Link>
-            </p>
+          <div className="flex flex-col justify-center items-center gap-10 mt-5">
+            <div className="text-center">
+              <p className="text-base-content/60 text-blue-700">
+                Bạn chưa có tải khoản?{" "}
+                <Link href="/register" className="link link-primary">
+                  ĐĂNG KÝ NGAY
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {isFaceIDModalOpen && <FaceID />}
-
-      {/* Right Side - Image/Pattern */}
-      <AuthImagePattern
-        title={"Chào mừng"}
-        subtitle={
-          "Đăng nhập để tiếp tục sử dụng dịch vụ tin nhắn và kết nối với bạn bè"
-        }
-      />
     </div>
   );
 };
