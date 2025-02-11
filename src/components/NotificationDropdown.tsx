@@ -128,37 +128,43 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
   };
 
   const notificationMenu = (
-    <div
-      style={{ width: 300 }}
-      className="bg-red-100 mt-4 rounded-lg py-2 px-4"
-    >
+    <div className="w-80 mt-4 bg-white shadow-lg rounded-lg py-3 px-4 border border-gray-200">
       {loading ? (
-        <Spin style={{ width: "100%", textAlign: "center" }} />
+        <div className="flex justify-center items-center h-24">
+          <Spin />
+        </div>
       ) : (
         <List
           dataSource={notifications}
-          className="overflow-auto h-96"
+          className="overflow-auto max-h-96"
           renderItem={(item) => (
-            <List.Item>
+            <List.Item className="p-3 border-b border-gray-100 hover:bg-gray-100 transition">
               <List.Item.Meta
                 avatar={
                   <Image
                     src={item.sender.avatar}
                     alt="avatar"
-                    style={{ width: 40, borderRadius: "50%" }}
                     width={40}
                     height={40}
-                    className="object-cover"
+                    className="rounded-full object-cover"
                   />
                 }
-                title={item.content}
-                description={new Date(item.createdAt).toLocaleString()}
-                className="p-4 border border-white-600"
+                title={
+                  <span className="text-gray-800 font-medium text-sm">
+                    {item.content}
+                  </span>
+                }
+                description={
+                  <span className="text-gray-500 text-xs">
+                    {new Date(item.createdAt).toLocaleString()}
+                  </span>
+                }
               />
               <div className="flex gap-2">
                 <Button
                   type="primary"
                   size="small"
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition"
                   onClick={() => handleUpdateStatus(item._id, "accepted")}
                   disabled={item.receivers[0].status === "accepted"}
                 >
@@ -168,6 +174,7 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
                   type="default"
                   size="small"
                   danger
+                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition"
                   onClick={() => handleUpdateStatus(item._id, "rejected")}
                   disabled={item.receivers[0].status === "rejected"}
                 >

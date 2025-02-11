@@ -20,6 +20,7 @@ import axiosRequest from "@/config/axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import CheckableTag from "antd/es/tag/CheckableTag";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -79,27 +80,41 @@ export default function RegisterForm() {
         toast.error("Xác nhận OTP thất bại. Vui lòng thử lại.");
       }
     } catch (error) {
-      console.log(error);
-      toast.error("Đã xảy ra lỗi. Vui lòng thử lại sau.");
+      toast.error(error);
     }
   };
 
   const validateForm = () => {
-    if (!formData.fullName.trim()) return toast.error("Full name is required");
-    if (!formData.email.trim()) return toast.error("Email is required");
-    if (!/\S+@\S+\.\S+/.test(formData.email))
-      return toast.error("Invalid email format");
-    if (!formData.password) return toast.error("Password is required");
-    if (formData.password.length < 6)
-      return toast.error("Password must be at least 6 characters");
+    let check = true;
+    if (!formData.fullName.trim()) {
+      toast.error("Full name is required");
+      check = false;
+    }
+    if (!formData.email.trim()) {
+      toast.error("Email is required");
+      check = false;
+    }
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      toast.error("Invalid email format");
+      check = false;
+    }
+    if (!formData.password) {
+      toast.error("Password is required");
+      check = false;
+    }
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      check = false;
+    }
 
-    return true;
+    return check;
   };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
     const success = validateForm();
+
     if (success) {
       setModalOpen(true);
       try {
@@ -164,30 +179,24 @@ export default function RegisterForm() {
       <AuthImagePattern
         title="Tham gia cộng đồng"
         subtitle="Kết nối quá facebook"
-      ></AuthImagePattern>
+      />
 
       {/* right */}
       <div className="flex items-center justify-center">
-        <div className="flex flex-col w-3/5 justify-center items-center p-6 bg-[#FEFEFE] border-2 border-[#F977F7] rounded-lg">
+        <div className="flex flex-col w-4/5 justify-center items-center  max-w-md px-6 py-3 bg-[#FEFEFE] border-2 border-[#F977F7] rounded-lg">
           <div className="w-full max-w-md space-y-8">
-            <div className="flex flex-col items-center mb-8">
-              <div className="bg-transparent rounded-xl flex items-center justify-center transition-colors p-0">
-                <Image
-                  className="object-cover p-0"
-                  src="/images/logoVirgo.png"
-                  width={120}
-                  height={120}
-                  alt="Virgo"
-                />
-              </div>
-              <h1 className="text-2xl text-[#8361B7] font-bold">
-                Chào mừng bạn đến với{" "}
-                <span className="text-[#FED93F]">VirgoChat</span>
-              </h1>
+            <div className="bg-transparent rounded-xl flex items-center justify-center transition-colors">
+              <Image
+                className="object-cover p-0"
+                src="/images/logoVirgo.png"
+                width={120}
+                height={120}
+                alt="Virgo"
+              />
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className=" w-full">
+          <form onSubmit={handleSubmit} className="w-full">
             <div className="form-control">
               <label className="label">
                 <span className="label-text font-medium">Tên đầy đủ</span>
@@ -299,13 +308,13 @@ export default function RegisterForm() {
       </div>
 
       {isModalOpen && (
-        <div className="modal modal-open bg-dark-300">
-          <div className="modal-box bg-dark-300">
+        <div className="modal modal-open bg-[#FEFEFE]">
+          <div className="modal-box bg-[#FEFEFE] rounded-md border-2 border-red-200">
             <h3 className="font-bold text-lg">Xác nhận email của bạn</h3>
             <p className="py-4">
               Kiểm tra lại chính xác địa chỉ email của bạn trước khi bấm gửi OTP
             </p>
-            <p className="py-4 bg-[#C5B3E2]">{formData.email}</p>
+            <p className="p-4 rounded-lg bg-[#C5B3E2]">{formData.email}</p>
             <div className="modal-action">
               {!isOtpInputVisible && (
                 <button
@@ -337,7 +346,10 @@ export default function RegisterForm() {
                   Nhập OTP
                 </button>
               )}
-              <button className="btn btn-secondary" onClick={handleCancel}>
+              <button
+                className="btn btn-secondary bg-red-500 hover:opacity-90 hover:bg-red-500 text-white border-none"
+                onClick={handleCancel}
+              >
                 Cancel
               </button>
             </div>

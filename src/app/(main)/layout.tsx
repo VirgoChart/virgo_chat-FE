@@ -28,18 +28,6 @@ export default function MainLayout({
     if (onlineUsersData) setOnlineUsers(JSON.parse(onlineUsersData));
   }, []);
 
-  // useEffect(() => {
-  //   const handleBeforeUnload = () => {
-  //     disconnectSocket();
-  //   };
-
-  //   window.addEventListener("beforeunload", handleBeforeUnload);
-
-  //   return () => {
-  //     window.removeEventListener("beforeunload", handleBeforeUnload);
-  //   };
-  // }, [disconnectSocket]);
-
   console.log("Online users: ", onlineUsers);
 
   if (!user) {
@@ -54,8 +42,9 @@ export default function MainLayout({
       <div className="flex flex-col min-h-screen">
         <Navbar />
 
-        <Sidebar socket={socket} />
+        {/* <Sidebar socket={socket} /> */}
         <div className="flex flex-1 flex-col">{children}</div>
+
         <Footer />
       </div>
     </div>

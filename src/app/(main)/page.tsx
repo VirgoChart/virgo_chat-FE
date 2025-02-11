@@ -1,13 +1,5 @@
-"use client";
-
-import Navbar from "@/components/Navbar";
-
 const Home = () => {
-  return (
-    <main>
-      <Navbar />
-    </main>
-  );
+  return <main></main>;
 };
 
 export default Home;

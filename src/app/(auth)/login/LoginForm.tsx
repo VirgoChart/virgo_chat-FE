@@ -52,7 +52,7 @@ const LoginPage = () => {
           },
           { withCredentials: true }
         );
-        localStorage.setItem("authUser", JSON.stringify(res.data));
+        localStorage.setItem("authUser", JSON.stringify(res));
         toast.success("Đăng nhập thành công");
         router.push("/");
       } catch (error: any) {
@@ -86,27 +86,20 @@ const LoginPage = () => {
         }
       />
 
-      <div className="flex flex-col justify-center items-center w-full">
-        <div className="w-4/5 bg-[#FEFEFE] border-2 border-[#F977F7] rounded-lg px-6 py-4 max-w-md">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="flex flex-col items-center gap-2 group">
-              <div
-                className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20
+      <div className="flex justify-center items-center">
+        <div className="w-4/5 bg-[#FEFEFE] border-2 border-[#F977F7] rounded-lg px-6 py-3 max-w-md">
+          <div className="flex flex-col items-center group">
+            <div
+              className="rounded-xl flex items-center justify-center
               transition-colors"
-              >
-                <Image
-                  className="object-cover p-0"
-                  src="/images/logoVirgo.png"
-                  width={120}
-                  height={120}
-                  alt="Virgo"
-                />
-              </div>
-              <h1 className="text-2xl text-[#8361B7] font-bold">
-                Chào mừng bạn trở lại với{" "}
-                <span className="text-[#FED93F]">VirgoChat</span>
-              </h1>
+            >
+              <Image
+                className="object-cover p-0"
+                src="/images/logoVirgo.png"
+                width={120}
+                height={120}
+                alt="Virgo"
+              />
             </div>
           </div>
 
@@ -193,7 +186,7 @@ const LoginPage = () => {
 
               <div
                 onClick={() => setIsFaceIDModalOpen(true)}
-                className="hover:text-white hover:bg-red-400 hover:border-white transition-colors px-4 py-3 hover:opacity-95 border-2 border-red-200 flex items-center justify-center gap-4 rounded-lg cursor-pointer"
+                className="hover:text-white hover:bg-red-400 hover:border-white transition-colors px-4 py-2 hover:opacity-95 border-2 border-red-200 flex items-center justify-center gap-4 rounded-lg cursor-pointer"
               >
                 <TbFaceId
                   size={30}
@@ -214,10 +207,13 @@ const LoginPage = () => {
 
           <div className="flex flex-col justify-center items-center gap-10 mt-5">
             <div className="text-center">
-              <p className="text-base-content/60 text-blue-700">
+              <p className="text-base-content/60">
                 Bạn chưa có tải khoản?{" "}
-                <Link href="/register" className="link link-primary">
-                  ĐĂNG KÝ NGAY
+                <Link
+                  href="/register"
+                  className="hover:underline text-blue-700"
+                >
+                  Đăng ký ngay
                 </Link>
               </p>
             </div>
@@ -225,7 +221,13 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {isFaceIDModalOpen && <FaceID />}
+      {isFaceIDModalOpen && (
+        <FaceID
+          onClose={() => {
+            setIsFaceIDModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

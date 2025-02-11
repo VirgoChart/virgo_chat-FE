@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, MessageSquare, Settings, User } from "lucide-react";
+import { LogOut, MessageSquare, Settings, User, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import Image from "next/image";
@@ -14,6 +14,9 @@ import { AutoComplete, Input, Modal } from "antd";
 import { FaRegMessage } from "react-icons/fa6";
 import { useAuthStore } from "../store/useAuthStore";
 import NotificationDropdown from "./NotificationDropdown";
+import { Drawer } from "antd";
+import { set } from "react-hook-form";
+import dayjs from "dayjs";
 
 const Navbar = () => {
   const { logOut, socket } = useAuthStore();
@@ -21,7 +24,14 @@ const Navbar = () => {
   const router = useRouter();
   const user =
     typeof window !== "undefined" ? localStorage.getItem("authUser") : null;
-  const [users, setUsers] = useState<any[]>([]);
+  interface User {
+    _id: string;
+    userName: string;
+    fullName: string;
+    avatar?: string;
+  }
+
+  const [users, setUsers] = useState<User[]>([]);
   const [usernameSearch, setUsernameSearch] = useState("");
   const [fullnameSearch, setFullnameSearch] = useState("");
   const [filteredUsernames, setFilteredUsernames] = useState<any[]>([]);
@@ -36,6 +46,38 @@ const Navbar = () => {
     fullName?: string;
     createdAt?: string;
   }>({});
+
+  const [requestText, setRequestText] = useState("Yêu cầu nhắn tin");
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState([]);
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const data = await axiosRequest.get("/notifications", {
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+        withCredentials: true,
+      });
+
+      setNotifications(data.notifications);
+    } catch (err: any) {
+      console.error("Lỗi khi lấy thông báo:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const showModalInfoUser = async (userId: string) => {
     try {
@@ -76,43 +118,35 @@ const Navbar = () => {
   }, [getAllUsers]);
 
   useEffect(() => {
-    if (usernameSearch) {
-      const lowerCaseTerm = usernameSearch.toLowerCase();
-      setFilteredUsernames(
-        (users || []).filter((user) =>
-          user?.userName?.toLowerCase().includes(lowerCaseTerm)
-        )
-      );
-    } else {
-      setFilteredUsernames([]);
-    }
-  }, [usernameSearch, users]);
+    if (searchTerm) {
+      const lowerCaseTerm = searchTerm.toLowerCase();
 
-  useEffect(() => {
-    if (fullnameSearch) {
-      const lowerCaseTerm = fullnameSearch.toLowerCase();
-      setFilteredFullnames(
-        (users || []).filter((user) =>
+      const results = (users || []).filter(
+        (user) =>
+          user?.userName?.toLowerCase().includes(lowerCaseTerm) ||
           user?.fullName?.toLowerCase().includes(lowerCaseTerm)
-        )
       );
+
+      setFilteredUsers(results);
     } else {
-      setFilteredFullnames([]);
+      setFilteredUsers([]);
     }
-  }, [fullnameSearch, users]);
+  }, [searchTerm, users]);
 
   const handleLogout = () => {
+    router.replace("/login");
+    setIsDrawerOpen(false);
     logOut();
-    router.push("/login");
   };
 
   const sendMessageRequest = async () => {
     try {
+      setRequestText("Đang chờ xác nhận ...");
       const res = await axiosRequest.post(
         "/notifications/create",
         {
           receiverIds: [userInfo._id],
-          roomType: "private",
+          roomType: "group",
         },
         { withCredentials: true }
       );
@@ -121,78 +155,96 @@ const Navbar = () => {
     }
   };
 
+  const deleteMessageRequest = async () => {
+    try {
+      setRequestText("Yêu cầu nhắn tin");
+      const res = await axiosRequest.delete(`/notifications/${userInfo._id}`, {
+        withCredentials: true,
+      });
+    } catch (error: any) {
+      toast.error(error);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return dayjs(dateString).format("DD/MM/YYYY");
+  };
+
+  // const blockUser = async () => {
+  //   try {
+
+  //     const res = await``
+  //   } catch (error: any) {
+  //     toast.error(error);
+  //   }
+  // };
+
   return (
     <header className="bg-[#AA8BE2] border-b border-base-300 fixed w-full top-0 z-40 backdrop-blur-lg">
       <div className="container mx-auto px-4 h-16">
         <div className="flex items-center justify-between h-full">
+          {/* Logo */}
           <div className="flex items-center gap-8">
             <Link
               href="/"
               className="flex items-center gap-2.5 hover:opacity-80 transition-all"
             >
-              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-primary" />
+              <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center bg-white-200">
+                <Image
+                  className="object-cover p-0"
+                  src="/images/logoVirgo.png"
+                  width={120}
+                  height={120}
+                  alt="Virgo"
+                />
               </div>
-              <h1 className="text-lg font-bold">VirgoChat</h1>
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Menu Desktop */}
+          <div className="hidden md:flex items-center gap-4">
+            {/* Tìm kiếm */}
             <AutoComplete
               className="w-64"
-              options={filteredUsernames.map((user) => ({
-                value: user.userName,
+              options={filteredUsers.map((user) => ({
+                value: user.userName, // Giá trị khi chọn
                 key: user._id,
                 label: (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
                     <Image
-                      src={user.avatar}
+                      src={user.avatar || "/default-avatar.png"}
                       alt={user.userName}
                       className="w-8 h-8 rounded-full"
                       width={32}
                       height={32}
                     />
-                    <span>{user.userName}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{user.userName}</span>
+                      <span className="text-xs text-gray-500">
+                        {user.fullName}
+                      </span>
+                    </div>
                   </div>
                 ),
               }))}
-              value={usernameSearch}
-              onChange={setUsernameSearch}
+              value={searchTerm}
+              onChange={setSearchTerm}
               onSelect={handleSelect}
             >
-              <Input.Search placeholder="Tìm kiếm theo username" allowClear />
+              <Input.Search placeholder="Tìm kiếm người dùng" allowClear />
             </AutoComplete>
 
-            <AutoComplete
-              className="w-64"
-              options={filteredFullnames.map((user) => ({
-                value: user.fullName,
-                label: (
-                  <div className="flex items-center gap-2">
-                    <Image
-                      src={user.avatar}
-                      alt={user.fullName}
-                      className="w-8 h-8 rounded-full"
-                      width={32}
-                      height={32}
-                    />
-                    <span>{user.fullName}</span>
-                  </div>
-                ),
-              }))}
-              value={fullnameSearch}
-              onChange={setFullnameSearch}
-              onSelect={handleSelect}
-            >
-              <Input.Search placeholder="Tìm kiếm theo tên đầy đủ" allowClear />
-            </AutoComplete>
+            <Link href={"/chat"} className="btn btn-sm gap-2 transition-colors">
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Chat</span>
+            </Link>
 
             <Link
+              title="Cài đặt"
               href={"/settings"}
               className="btn btn-sm gap-2 transition-colors"
             >
               <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Cài đặt</span>
             </Link>
 
             {!user ? (
@@ -202,60 +254,156 @@ const Navbar = () => {
               </Link>
             ) : (
               <>
-                <Link href={"/user/my-account"} className="btn btn-sm gap-2">
-                  <User className="size-5" />
-                  <span className="hidden sm:inline">Trang cá nhân</span>
-                </Link>
-                <button
-                  className="flex gap-2 items-center"
-                  onClick={handleLogout}
+                <Link
+                  title="Trang cá nhân"
+                  href={"/user/my-account"}
+                  className="btn btn-sm gap-2"
                 >
-                  <LogOut className="size-5" />
-                  <span className="hidden sm:inline">Đăng xuất</span>
-                </button>
+                  <User className="size-5" />
+                </Link>
               </>
             )}
             <NotificationDropdown socket={socket} />
           </div>
+
+          {/* Menu Mobile */}
+          <button
+            className="md:hidden p-2 rounded-lg bg-white shadow-md"
+            onClick={() => setIsDrawerOpen(true)}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* Drawer Menu */}
+          <Drawer
+            title="Menu"
+            placement="right"
+            onClose={() => setIsDrawerOpen(false)}
+            open={isDrawerOpen}
+          >
+            <div className="flex flex-col gap-4">
+              <AutoComplete
+                className="w-full"
+                options={filteredUsernames.map((user) => ({
+                  value: user.userName,
+                  key: user._id,
+                  label: (
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src={user.avatar}
+                        alt={user.userName}
+                        className="w-8 h-8 rounded-full"
+                        width={32}
+                        height={32}
+                      />
+                      <span>{user.userName}</span>
+                    </div>
+                  ),
+                }))}
+                value={usernameSearch}
+                onChange={setUsernameSearch}
+                onSelect={handleSelect}
+              >
+                <Input.Search placeholder="Tìm kiếm theo username" allowClear />
+              </AutoComplete>
+
+              <Link href={"/chat"} className="btn btn-block">
+                <MessageSquare className="w-4 h-4" />
+                Chat
+              </Link>
+
+              <Link href={"/settings"} className="btn btn-block">
+                <Settings className="w-4 h-4" />
+                Cài đặt
+              </Link>
+
+              {!user ? (
+                <Link href={"/login"} className="btn btn-block">
+                  <User className="size-5" />
+                  Đăng nhập
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    title="Trang cá nhân"
+                    href={"/user/my-account"}
+                    className="btn btn-block"
+                  >
+                    <User className="size-5" />
+                  </Link>
+                  <button
+                    className="btn btn-block bg-red-500 text-white"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="size-5" />
+                    Đăng xuất
+                  </button>
+                </>
+              )}
+            </div>
+          </Drawer>
         </div>
       </div>
+
       <Modal
-        title="Thông tin người dùng"
+        title={null}
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
+        className="custom-modal"
       >
         {userInfo && (
-          <div>
-            <Image
-              src={userInfo.avatar || ""}
-              width={100}
-              height={100}
-              alt="Avatar"
-              className="object-cover rounded-full w-20 h-20"
-            />
-            <button className="flex items-center justify-center gap-4 bg-red-500 text-white rounded-lg px-4 mt-2">
-              <GoBlocked size={10} />
-              <span>Block</span>
-            </button>
+          <div className="p-6 bg-white rounded-lg relative">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-24 h-24">
+                <Image
+                  src={userInfo.avatar || ""}
+                  width={96}
+                  height={96}
+                  alt="Avatar"
+                  className="object-cover rounded-full shadow-md"
+                />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {userInfo.userName}
+              </h2>
 
-            <button
-              onClick={sendMessageRequest}
-              className="flex items-center justify-center gap-4 bg-green-600 text-white rounded-lg px-4 mt-2"
-            >
-              <FaRegMessage size={10} />
-              <span>Yêu cầu nhắn tin</span>
-            </button>
-            <div className="flex flex-col gap-2">
-              <p className="text-lg text-dark-700">
-                username: {userInfo.userName}
-              </p>
-              <p className="text-lg text-dark-700">
-                fullname: {userInfo.fullName}
-              </p>
-              <p className="text-lg text-dark-700">
-                Tham gia vào: {userInfo.createdAt}
-              </p>
+              <div className="flex gap-4 mt-4">
+                <button className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-4 py-2 transition-all">
+                  <GoBlocked size={16} />
+                  <span>Block</span>
+                </button>
+
+                <button
+                  onClick={sendMessageRequest}
+                  className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
+                >
+                  <FaRegMessage size={16} />
+                  <span>{requestText}</span>
+                </button>
+
+                {requestText === "Đang chờ xác nhận ..." && (
+                  <button className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-4 py-2 transition-all">
+                    <GoBlocked size={16} />
+                    <span>Hủy yêu cầu</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-4 w-full border-t pt-4 flex flex-col gap-2">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Username:</span>
+                  <span className="font-medium">{userInfo.userName}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Full Name:</span>
+                  <span className="font-medium">{userInfo.fullName}</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Tham gia vào:</span>
+                  {userInfo.createdAt ? formatDate(userInfo.createdAt) : "N/A"}
+                </div>
+              </div>
             </div>
           </div>
         )}

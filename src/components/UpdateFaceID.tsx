@@ -1,97 +1,99 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import * as faceapi from "face-api.js";
-import axiosRequest from "@/config/axios";
 import { toast } from "react-toastify";
+import axiosRequest from "@/config/axios";
+import { cn } from "@/config/utils";
 
-// Định nghĩa các kiểu dữ liệu cho các props
-interface UpdateFaceIDModalProps {
+interface FaceDetectionModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const UpdateFaceIDModal: React.FC<UpdateFaceIDModalProps> = ({
+const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
   visible,
   onClose,
 }) => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [capturedDescriptor, setCapturedDescriptor] = useState<number[]>([]);
-  const [countdown, setCountdown] = useState(5);
   const [isCounting, setIsCounting] = useState(false);
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null);
 
-  // Hàm tải mô hình face-api.js
+  // 🟢 Load Face API models
   useEffect(() => {
     const loadModels = async () => {
-      const MODEL_URL = "/models";
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+      await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+      await faceapi.nets.faceLandmark68Net.loadFromUri("/models");
+      await faceapi.nets.faceRecognitionNet.loadFromUri("/models");
+      console.log("✅ Face API models loaded");
       setModelsLoaded(true);
     };
-
     loadModels();
   }, []);
 
-  // Hàm bắt đầu video từ webcam
-  const startVideo = () => {
-    navigator.mediaDevices
-      .getUserMedia({ video: true })
-      .then((stream) => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      })
-      .catch((err) => console.error("Lỗi truy cập camera: ", err));
-  };
-
-  // Hàm xử lý phát hiện khuôn mặt
-  const handleFaceDetection = useCallback(async () => {
-    if (videoRef.current && modelsLoaded && visible) {
-      const detections = await faceapi
-        .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-
-      if (detections.length > 0 && !isCounting) {
-        setIsCounting(true);
-        // Dừng tất cả các interval cũ
-        if (intervalId) clearInterval(intervalId);
-
-        const newIntervalId = setInterval(() => {
-          setCountdown((prev) => {
-            const nextCountdown = prev - 1;
-            if (nextCountdown === 0) {
-              clearInterval(newIntervalId);
-              const descriptors = detections.flatMap((detection) =>
-                Array.from(detection.descriptor)
-              );
-              setCapturedDescriptor(descriptors);
-              setIsCounting(false);
-              setCountdown(5); // Reset countdown
-            }
-            return nextCountdown;
-          });
-        }, 1000);
-
-        setIntervalId(newIntervalId);
-      }
-
-      if (detections.length === 0 && isCounting) {
-        setIsCounting(false);
-        setCountdown(5); // Reset countdown nếu không có khuôn mặt
-      }
-
-      requestAnimationFrame(handleFaceDetection);
+  // 🟢 Start video stream
+  const startVideo = useCallback(() => {
+    if (videoRef.current) {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          videoRef.current!.srcObject = stream;
+        })
+        .catch((err) => console.error("❌ Lỗi truy cập camera:", err));
     }
-  }, [modelsLoaded, visible, intervalId, isCounting]);
+  }, []);
 
-  // Hàm lưu Face ID lên server
+  // 🔴 Stop video stream
+  const stopVideo = useCallback(() => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
+    }
+  }, []);
+
+  // 🔍 Face detection
+  const handleFaceDetection = useCallback(async () => {
+    if (!videoRef.current || !modelsLoaded || !visible) return;
+
+    const detections = await faceapi
+      .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
+      .withFaceDescriptors();
+    if (detections.length > 0) {
+      setIsCounting(true);
+      setCapturedDescriptor(Array.from(detections[0].descriptor));
+    } else {
+      setIsCounting(false);
+      setCapturedDescriptor([]);
+    }
+  }, [modelsLoaded, visible]);
+
+  // 🎬 Start/Stop face detection when modal is opened/closed
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+
+    if (modelsLoaded && visible) {
+      console.log("📸 Modal opened, starting face detection...");
+      startVideo();
+
+      // Chạy nhận diện khuôn mặt mỗi 500ms
+      intervalId = setInterval(() => {
+        handleFaceDetection();
+      }, 1000);
+    } else {
+      stopVideo();
+      if (intervalId) clearInterval(intervalId);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [modelsLoaded, visible, handleFaceDetection]);
+
+  // 📤 Save face descriptor
   const handleSave = async () => {
-    if (capturedDescriptor) {
+    if (capturedDescriptor.length > 0) {
       try {
-        setIsCounting(false);
-        setCountdown(5);
         await axiosRequest.put(
           "/auth/update/face-id",
           { faceId: capturedDescriptor },
@@ -106,33 +108,41 @@ const UpdateFaceIDModal: React.FC<UpdateFaceIDModalProps> = ({
     }
   };
 
-  // UseEffect để bắt đầu video và nhận diện khuôn mặt khi modal mở
   useEffect(() => {
-    if (modelsLoaded && visible) {
-      startVideo();
-      requestAnimationFrame(handleFaceDetection); // Bắt đầu nhận diện khuôn mặt ngay khi modal mở
-    }
-  }, [modelsLoaded, visible, handleFaceDetection]);
+    stopVideo();
+  }, [visible]);
 
   return (
-    <div className={`modal ${visible ? "modal-open" : ""}`}>
-      <div className="modal-box">
-        <h3 className="font-bold text-lg">Cập nhật FaceID</h3>
-        <video ref={videoRef} width="720" height="560" autoPlay muted />
-        {isCounting && <p className="mt-4">Đếm ngược: {countdown}</p>}
-        <div className="modal-action">
+    <div
+      className={`fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 ${
+        visible ? "block" : "hidden"
+      }`}
+    >
+      <div className="bg-white p-5 rounded-lg shadow-lg w-[500px]">
+        <h2 className="text-xl font-bold mb-4">Nhận diện khuôn mặt</h2>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          className="w-full h-full bg-gray-200 rounded-lg"
+        ></video>
+        <div className="flex justify-between mt-4">
           <button
-            className="btn btn-primary"
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg"
+            onClick={onClose}
+          >
+            Đóng
+          </button>
+          <button
+            className={cn(
+              "px-4 py-2 bg-blue-500 text-white rounded-lg",
+              capturedDescriptor.length === 0 &&
+                "bg-gray-300 cursor-not-allowed"
+            )}
             onClick={handleSave}
-            disabled={!capturedDescriptor}
+            disabled={capturedDescriptor.length === 0}
           >
             Lưu
-          </button>
-          <button className="btn" onClick={() => setCapturedDescriptor([])}>
-            Chụp lại
-          </button>
-          <button className="btn btn-outline" onClick={onClose}>
-            Đóng
           </button>
         </div>
       </div>
@@ -140,4 +150,4 @@ const UpdateFaceIDModal: React.FC<UpdateFaceIDModalProps> = ({
   );
 };
 
-export default UpdateFaceIDModal;
+export default FaceDetectionModal;

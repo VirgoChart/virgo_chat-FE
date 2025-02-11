@@ -47,10 +47,10 @@ const UserSidebar = ({
   );
 
   const handleLogout = () => {
+    router.replace(PATH.LOGIN);
     deleteTokenServer();
     clearProfile();
     closeMenu?.();
-    router.replace(PATH.LOGIN);
   };
 
   const SidebarContent = (

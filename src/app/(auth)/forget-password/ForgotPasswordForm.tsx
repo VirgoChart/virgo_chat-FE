@@ -18,6 +18,7 @@ import axiosRequest from "@/config/axios";
 import { Router } from "express";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const schema = yup
   .object({
@@ -64,12 +65,12 @@ const ForgotPasswordForm = () => {
 
     setIsLoading(true);
     try {
-      setIsModalOpen(true);
       const res = await axiosRequest.post(
         "/auth/reset-password/send-otp",
         { email },
         { withCredentials: true }
       );
+      setIsModalOpen(true);
 
       setCountdown(60);
       setMessage("Mã xác nhận đã được gửi đến email của bạn!");
@@ -103,24 +104,38 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <div>
+    <div className="max-w-md mx-auto w-4/5 p-6 bg-white rounded-lg shadow-md border-2 border-[#F977F7]">
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mx-auto flex flex-col gap-3">
-            <Input
-              name="email"
-              label="Nhập email của bạn"
-              placeholder="Email"
-            />
-          </div>
+        <div
+          className="rounded-xl flex items-center justify-center
+                      transition-colors"
+        >
+          <Image
+            className="object-cover p-0"
+            src="/images/logoVirgo.png"
+            width={120}
+            height={120}
+            alt="Virgo"
+          />
+        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
+          {/* Email Input */}
+          <Input
+            name="email"
+            className="bg-white"
+            label="Nhập email của bạn"
+            placeholder="you@example.com"
+          />
 
-          <div className="text-sm text-red my-4">{message}</div>
+          {/* Error Message */}
+          <div className="text-sm text-red-500">{message}</div>
 
-          <div className="text-center mx-auto flex flex-col">
+          {/* Submit Button */}
+          <div className="text-center space-y-3">
             <Spin isLoading={isLoading} className="text-dark-300 fill-blue-800">
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-[#7470E4] hover:opacity-85 hover:bg-[#7470E4] text-white font-normal py-2 rounded-lg"
                 disabled={isLoading || countdown > 0}
               >
                 {countdown > 0
@@ -128,51 +143,59 @@ const ForgotPasswordForm = () => {
                   : "Gửi mã xác nhận"}
               </Button>
             </Spin>
+
+            {/* Back to Login Button */}
             <Button
               type="button"
-              className="w-full my-4 hover:opacity-80 hover:bg-white"
+              className="w-full border border-primary-900 text-primary-900 font-normal hover:bg-red-100 hover:opacity-80 hover:text-black py-2 rounded-lg bg-red-100 transition"
               variant="outlined"
             >
-              <Link
-                href={PATH.LOGIN}
-                className="text-sm text-primary-900 font-bold"
-              >
-                Quay lại trang đăng nhập
-              </Link>
+              <Link href={PATH.LOGIN}>Quay lại trang đăng nhập</Link>
             </Button>
           </div>
         </form>
       </FormProvider>
 
+      {/* OTP Modal */}
       {isModalOpen && (
-        <div className="modal modal-open bg-dark-300">
-          <div className="modal-box bg-dark-300">
-            <p className="py-4">KMã OTP đã được gửi đến email sau</p>
-            <p className="py-4 bg-[#C5B3E2]">{email}</p>
-            <div className="modal-action">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-md">
+          <div className="bg-white rounded-lg p-6 w-80 shadow-lg">
+            <p className="text-center text-gray-700">Mã OTP đã được gửi đến</p>
+            <p className="text-center bg-purple-200 text-purple-800 font-medium py-2 rounded-md">
+              {email}
+            </p>
+
+            <div className="mt-4 space-y-3 text-center">
               {isOtpInputVisible ? (
                 <>
                   <input
                     type="text"
                     placeholder="Nhập OTP"
-                    className="input input-bordered w-full max-w-xs"
+                    className="w-full bg-white-200 px-3 py-2 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
                   />
-                  <button className="btn btn-primary" onClick={handleVerifyOTP}>
+                  <button
+                    className="w-full bg-green-600 text-white font-medium py-2 rounded-lg hover:bg-green-700"
+                    onClick={handleVerifyOTP}
+                  >
                     Xác nhận
                   </button>
                 </>
               ) : (
                 <button
-                  className="btn btn-secondary"
+                  className="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700"
                   onClick={() => setIsOtpInputVisible(true)}
                 >
                   Nhập OTP
                 </button>
               )}
-              <button className="btn btn-secondary" onClick={handleCancel}>
-                Cancel
+
+              <button
+                className="w-full bg-gray-400 text-white font-medium py-2 rounded-lg hover:bg-gray-500"
+                onClick={handleCancel}
+              >
+                Hủy
               </button>
             </div>
           </div>

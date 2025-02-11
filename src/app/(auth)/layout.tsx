@@ -8,7 +8,7 @@ const AuthLayout = ({
 }>) => {
   return (
     <div className="w-screen h-screen flex justify-center items-center">
-      <div className="w-full rounded-lg">{children}</div>
+      <div className="w-full rounded-lg h-full">{children}</div>
     </div>
   );
 };
