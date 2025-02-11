@@ -1,21 +1,20 @@
+"use client";
+
 import { useEffect, useState, useCallback, use } from "react";
 import { Users } from "lucide-react";
 import Image from "next/image";
-import SidebarSkeleton from "./skeletons/SidebarSkeleton";
+import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
 import { getCookie } from "@/utils/cookies";
 import axiosRequest from "@/config/axios";
 import { toast } from "react-toastify";
 import MessageInput from "@/app/(main)/message/MessageInput";
 import { useAuthStore } from "@/store/useAuthStore";
-import { get } from "http";
-
-interface SidebarProps {
-  socket: any;
-}
+import { set } from "react-hook-form";
 
 interface Message {
   file: any;
   _id: string;
+  image: string;
   sender: {
     fullName: string;
   };
@@ -25,6 +24,7 @@ interface Message {
 }
 
 interface Room {
+  members: any;
   _id: string;
   name: string;
   lastMessage?: {
@@ -52,8 +52,6 @@ const Sidebar = () => {
     }
   }, []);
 
-  console.log(roomId);
-
   const getRoomById = async (roomId: string) => {
     try {
       const response = await axiosRequest.get(`/rooms/${roomId}`, {
@@ -70,6 +68,14 @@ const Sidebar = () => {
     }
   };
 
+  const logMessageType = () => {
+    messages.forEach((message) => {
+      console.log(message);
+    });
+  };
+
+  logMessageType();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const user = JSON.parse(window.localStorage.getItem("authUser") || "{}");
@@ -82,11 +88,27 @@ const Sidebar = () => {
       socket.on("newMessage", (newMessage: any) => {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
       });
+
+      socket.on("updatedMessage", (updatedMessage: any) => {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg._id === updatedMessage._id ? updatedMessage : msg
+          )
+        );
+      });
+
+      socket.on("deletedMessage", ({ messageId }: { messageId: string }) => {
+        setMessages((prevMessages) =>
+          prevMessages.filter((msg) => msg._id !== messageId)
+        );
+      });
     }
 
     return () => {
       if (socket) {
         socket.off("newMessage");
+        socket.off("updatedMessage");
+        socket.off("deletedMessage");
       }
     };
   }, [socket]);
@@ -127,7 +149,7 @@ const Sidebar = () => {
         {
           roomId: roomId,
           text,
-          file: fileBase64,
+          image: fileBase64,
         },
         {
           headers: {
@@ -136,9 +158,6 @@ const Sidebar = () => {
           withCredentials: true,
         }
       );
-
-      toast.success(response.message);
-
       getRoomById(roomId);
     } catch (err: any) {
       toast.error(err);
@@ -174,6 +193,7 @@ const Sidebar = () => {
         withCredentials: true,
       });
       console.log(res);
+      toast.success("Đã xóa tin nhắn");
       getRoomById(roomId);
     } catch (error) {
       console.error("Lỗi khi xóa tin nhắn", error);
@@ -182,8 +202,26 @@ const Sidebar = () => {
 
   if (isLoading) return <SidebarSkeleton />;
 
+  const renderMessage = (message: Message) => {
+    if (message.text) {
+      return <p>{message.text}</p>;
+    } else if (message.image) {
+      return (
+        <Image
+          src={message.image}
+          alt="Image message"
+          className="object-contain"
+          width={500}
+          height={500}
+        />
+      );
+    }
+
+    return <p>Lỗi hiển thị tin nhắn</p>;
+  };
+
   return (
-    <div className="flex h-4/5 gap-10 p-10">
+    <div className="flex h-full gap-10 p-10">
       <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200 mt-20">
         <div className="border-b border-base-300 w-full p-5">
           <div className="flex items-center gap-2">
@@ -205,9 +243,7 @@ const Sidebar = () => {
             >
               <div className="relative mx-auto lg:mx-0">
                 <Image
-                  src={
-                    room?.lastMessage?.sender.profilePic || "/images/avatar.png"
-                  }
+                  src={"/images/avatar.png"}
                   alt={room?.name}
                   className="size-12 object-cover rounded-full"
                   width={20}
@@ -232,18 +268,20 @@ const Sidebar = () => {
         </div>
       </aside>
 
-      {messages.length !== 0 ? (
-        <div className="flex h-96 w-full flex-col mt-10">
+      {messages.length !== 0 || rooms.length !== 0 ? (
+        <div className={"flex h-96 w-full flex-col mt-10"}>
           <div className="flex-1 overflow-y-scroll h-96 p-4 space-y-3">
             {messages.map((message) => {
               const isCurrentUser =
                 message.sender.fullName === currrentUser.fullName;
               const isEditing = editingMessageId === message._id;
 
+              console.log(isEditing);
+
               return (
                 <div
                   key={message._id}
-                  className={`group w-fit p-3 border rounded-md shadow-sm bg-white hover:bg-gray-50 relative ${
+                  className={`relative w-fit p-3 border rounded-md shadow-sm bg-white hover:bg-gray-50 group ${
                     isCurrentUser
                       ? "ml-auto text-right bg-blue-200"
                       : "mr-auto text-left bg-gray-100"
@@ -252,9 +290,7 @@ const Sidebar = () => {
                 >
                   <div className="flex justify-between items-center">
                     <span
-                      className={`font-semibold ${
-                        isCurrentUser ? "text-blue-500" : "text-gray-700"
-                      }`}
+                      className={`font-semibold ${isCurrentUser ? "text-blue-500" : "text-gray-700"}`}
                     >
                       {message.sender.fullName}
                     </span>
@@ -263,84 +299,91 @@ const Sidebar = () => {
                     </span>
                   </div>
 
-                  {/* Nội dung tin nhắn */}
                   <div className="mt-2 text-gray-700">
                     {isEditing ? (
-                      <div className="flex space-x-2">
-                        <input
-                          type="text"
-                          value={editedText}
-                          onChange={(e) => setEditedText(e.target.value)}
-                          className="border px-2 py-1 rounded-md flex-1"
-                        />
-                        <button
-                          onClick={() => handleUpdate(message._id)}
-                          className="text-green-500 hover:underline"
-                        >
-                          Lưu
-                        </button>
-                        <button
-                          onClick={() => setEditingMessageId(null)}
-                          className="text-red-500 hover:underline"
-                        >
-                          Hủy
-                        </button>
-                      </div>
-                    ) : message.messageType === "text" ? (
-                      <p>{message.text}</p>
-                    ) : message.messageType === "file" ? (
-                      <a
-                        href={message.file.fileUrl}
-                        download
-                        className="text-blue-500 underline"
-                      >
-                        Tải về tệp
-                      </a>
-                    ) : message.messageType === "image" ? (
-                      <div className="w-full max-w-sm mx-auto">
-                        <Image
-                          src={message.file.fileUrl}
-                          alt="Image message"
-                          className="object-contain"
-                          width={500}
-                          height={500}
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={editedText}
+                        onChange={(e) => setEditedText(e.target.value)}
+                        className="border border-gray-300 bg-dark-200 rounded p-1 w-full"
+                      />
                     ) : (
-                      <p>[Unsupported message type]</p>
+                      renderMessage(message)
                     )}
                   </div>
 
-                  {/* Nút sửa và xóa (hiện khi hover) */}
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => {
-                        setEditingMessageId(message._id);
-                        setEditedText(message.text);
-                      }}
-                      className="text-blue-500 hover:underline bg-dark-150"
-                    >
-                      Sửa
-                    </button>
-                    <button
-                      onClick={() => handleDelete(message._id)}
-                      className="text-red-500 hover:underline"
-                    >
-                      Xóa
-                    </button>
-                  </div>
+                  {/* Hiển thị nút khi hover */}
+                  {isCurrentUser && (
+                    <div className="absolute top-6 right-full hidden group-hover:flex gap-2 p-2">
+                      {isEditing ? (
+                        <>
+                          <button
+                            onClick={() => handleUpdate(message._id)}
+                            className="text-green-600 hover:underline"
+                          >
+                            Lưu
+                          </button>
+                          <button
+                            onClick={() => setEditingMessageId(null)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Hủy
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingMessageId(message._id);
+                              setEditedText(message.text);
+                            }}
+                            className="text-blue-600 hover:underline"
+                          >
+                            Sửa
+                          </button>
+                          <button
+                            onClick={() => handleDelete(message._id)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Xóa
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
-          {/* Ô nhập tin nhắn */}
           <MessageInput roomId={roomId} sendMessage={sendMessage} />
         </div>
       ) : (
-        <div className="mt-40">
-          <div>Chọn phòng để bắt đầu nhắn tin</div>
-          <MessageInput roomId={roomId} sendMessage={sendMessage} />
+        <div className="w-full h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
+          <div className="max-w-md">
+            <Image
+              src="/images/logoVirgo.png"
+              alt="Logo"
+              className="mx-auto mb-6"
+              width={124}
+              height={124}
+              quality={100}
+            />
+            <h1 className="text-3xl font-bold mb-4">
+              Chào mừng đến với VirgoChat
+            </h1>
+            <p className="text-lg mb-6">
+              Kết nối với bạn bè và gia đình một cách dễ dàng và nhanh chóng.
+            </p>
+            <button
+              onClick={() =>
+                toast.success("Hãy tìm một người bạn và gửi yêu cầu nhắn tin")
+              }
+              className="bg-white text-blue-500 px-6 py-2 rounded-lg font-semibold shadow-md"
+            >
+              Bắt đầu ngay
+            </button>
+          </div>
         </div>
       )}
     </div>

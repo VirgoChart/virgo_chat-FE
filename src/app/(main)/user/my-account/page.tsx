@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
-import { Camera, Loader, Mail, User } from "lucide-react";
+import { Camera, Loader, LogOut, Mail, User } from "lucide-react";
 import Image from "next/image";
 import axiosRequest from "@/config/axios";
 import { getCookie } from "@/utils/cookies";
@@ -10,9 +10,10 @@ import { toast } from "react-toastify";
 import Spin from "@/components/ui/Spin";
 import { TbFaceId } from "react-icons/tb";
 import UpdateFaceIDModal from "@/components/UpdateFaceID";
+import { useRouter } from "next/navigation";
 
 const ProfilePage = () => {
-  const { isUpdatingProfile, updateProfile } = useAuthStore();
+  const { isUpdatingProfile, updateProfile, logOut } = useAuthStore();
   const [selectedImg, setSelectedImg] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +24,12 @@ const ProfilePage = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isDisable, setIsDisable] = useState(false);
   const [isUpdateFaceIDModalOpen, setIsUpdateFaceIDModalOpen] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    router.replace("/login");
+    logOut();
+  };
 
   const authUser = JSON.parse(window.localStorage.getItem("authUser"));
   const authToken = getCookie("jwt");
@@ -136,15 +143,14 @@ const ProfilePage = () => {
 
   return (
     <Spin isLoading={isLoading}>
-      <div className="h-screen pt-20 -mt-6">
+      <div className="py-20 -mt-6">
         <div className="max-w-2xl mx-auto p-4">
           <form
             className="rounded-xl p-6 space-y-8 bg-white-500"
             onSubmit={handleSubmit}
           >
             <div className="text-center">
-              <h1 className="text-2xl font-semibold ">Trang cá nhân</h1>
-              <p className="mt-2">Tài khoản của tôi</p>
+              <h1 className="text-2xl font-semibold ">Tài khoản của tôi</h1>
             </div>
 
             {/* Avatar upload section */}
@@ -178,11 +184,13 @@ const ProfilePage = () => {
                   />
                 </label>
               </div>
-              <p className="text-sm text-zinc-400">
-                {isUpdatingProfile
-                  ? "Đưng up chờ tỷ"
-                  : "Ấn vô camera mà up ảnh"}
-              </p>
+              <div
+                className="px-4 py-2 cursor-pointer bg-red-200 flex justify-center items-center gap-4 rounded-lg hover:opacity-80"
+                onClick={() => setIsUpdateFaceIDModalOpen(true)}
+              >
+                <TbFaceId size={30} color="blue" />
+                <span>Cập nhật FaceID</span>
+              </div>
             </div>
 
             {/* Form fields */}
@@ -254,25 +262,24 @@ const ProfilePage = () => {
                   <span>Trạng thái</span>
                   <span className="text-green-500">Active</span>
                 </div>
-                <div className="flex items-center justify-center">
+                <div className="flex gap-2 items-center justify-center">
                   <button
                     className=" w-full px-4 py-2 bg-white-600 rounded-lg transition-all hover:opacity-90 hover:bg-blue-200"
                     onClick={() => setIsModalOpen(true)}
                   >
                     Cập nhật mật khẩu
                   </button>
+                  <button
+                    title="Đăng xuất"
+                    className="flex items-center px-2 py-1 rounded-lg bg-red-200"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="size-5" />
+                  </button>
                 </div>
               </div>
             </div>
           </form>
-
-          <button
-            className="px-4 py-3 bg-blue-300 flex justify-center items-center gap-4 rounded-lg"
-            onClick={() => setIsUpdateFaceIDModalOpen(true)}
-          >
-            <TbFaceId size={30} />
-            <span>Cập nhật FaceID</span>
-          </button>
         </div>
         {isModalOpen && (
           <div className="modal modal-open bg-dark-300">

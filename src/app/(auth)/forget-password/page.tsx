@@ -2,13 +2,15 @@ import ForgotPasswordForm from "./ForgotPasswordForm";
 
 const ForgotPassword = () => {
   return (
-    <>
-      <div className="text-dark-200 text-xm text-center my-2">
-        Quên mật khẩu
-      </div>
-
+    <div
+      style={{
+        backgroundImage: "url('/images/bg-left.png')",
+        backgroundSize: "cover",
+      }}
+      className="h-full flex-1 flex justify-center items-center"
+    >
       <ForgotPasswordForm />
-    </>
+    </div>
   );
 };
 

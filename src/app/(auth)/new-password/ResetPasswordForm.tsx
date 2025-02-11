@@ -19,6 +19,7 @@ import {
 
 import InputPassword from "@/components/ui/InputPassword";
 import axiosRequest from "@/config/axios";
+import Image from "next/image";
 
 const schema = yup
   .object({
@@ -73,56 +74,84 @@ const ResetPasswordForm = () => {
   };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="mx-auto flex flex-col gap-3">
-          <InputPassword
-            name="newPassword"
-            label="Mật khẩu mới"
-            placeholder="Mật khẩu mới"
-            className="bg-white-700"
-          />
-          <InputPassword
-            name="confirmPassword"
-            label="Xác nhận mật khẩu"
-            placeholder="Xác nhận mật khẩu"
-            className="bg-white-700"
+    <div className="max-w-md mx-auto w-4/5 p-6 bg-white rounded-lg shadow-md border-2 border-[#F977F7]">
+      <FormProvider {...methods}>
+        <div
+          className="rounded-xl flex items-center justify-center
+                      transition-colors"
+        >
+          <Image
+            className="object-cover p-0"
+            src="/images/logoVirgo.png"
+            width={120}
+            height={120}
+            alt="Virgo"
           />
         </div>
-
-        <div className="text-red-300 my-2">{message}</div>
-
-        <div className="text-center mx-auto flex flex-col my-2">
-          <Spin isLoading={isLoading} className="text-dark-300 fill-blue-800">
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              Đặt lại mật khẩu
-            </Button>
-          </Spin>
-
-          <div className="font-bold text-dark-200 text-sm py-5 relative">
-            <span className="bg-white relative z-10 px-5 text-base">Hoặc</span>
-            <div className="absolute bottom-[50%] left-0 w-full h-px bg-dark-200"></div>
+        <form onSubmit={handleSubmit(onSubmit)} className="w-full space-y-4">
+          {/* Password Fields */}
+          <div className="flex flex-col gap-3">
+            <InputPassword
+              name="newPassword"
+              label="Mật khẩu mới"
+              placeholder="Mật khẩu mới"
+              className="bg-gray-100 focus:ring-2 focus:ring-blue-500"
+            />
+            <InputPassword
+              name="confirmPassword"
+              label="Xác nhận mật khẩu"
+              placeholder="Xác nhận mật khẩu"
+              className="bg-gray-100 focus:ring-2 focus:ring-blue-500"
+            />
           </div>
 
-          <Link
-            href={PATH.LOGIN}
-            className="text-sm text-primary-900 font-bold mt-2"
-          >
-            Quay lại trang đăng nhập
-          </Link>
+          {/* Error Message */}
+          <div className="text-red-500 text-sm">{message}</div>
 
-          <span className="text-sm text-dark-400 mt-2">
-            Bạn chưa có tài khoản?
-            <Link
-              href={PATH.REGISTER}
-              className="text-primary-900 font-bold ml-1"
-            >
-              Đăng kí ngay
-            </Link>
-          </span>
-        </div>
-      </form>
-    </FormProvider>
+          {/* Submit Button */}
+          <div className="text-center space-y-4">
+            <Spin isLoading={isLoading} className="text-dark-300 fill-blue-800">
+              <Button
+                type="submit"
+                className="w-full bg-[#7B76F1] hover:bg-[#7B76F1] hover:opacity-80 text-white font-medium py-2 rounded-lg transition"
+                disabled={isLoading}
+              >
+                Đặt lại mật khẩu
+              </Button>
+            </Spin>
+
+            {/* Separator Line */}
+            <div className="relative flex items-center justify-center py-2">
+              <span className="bg-white px-4 text-gray-600 font-medium z-10">
+                Hoặc
+              </span>
+              <div className="absolute inset-x-0 top-1/2 h-px bg-gray-300"></div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              {/* Back to Login */}
+              <Link
+                href={PATH.LOGIN}
+                className="text-sm text-[#7B76F1] font-medium hover:underline"
+              >
+                Quay lại trang đăng nhập
+              </Link>
+
+              {/* Register Link */}
+              <span className="text-sm text-gray-600">
+                Bạn chưa có tài khoản?
+                <Link
+                  href={PATH.REGISTER}
+                  className="text-[#7B76F1] font-medium ml-1 hover:underline"
+                >
+                  Đăng kí ngay
+                </Link>
+              </span>
+            </div>
+          </div>
+        </form>
+      </FormProvider>
+    </div>
   );
 };
 
