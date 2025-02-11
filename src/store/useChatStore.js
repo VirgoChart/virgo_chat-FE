@@ -9,6 +9,21 @@ export const useChatStore = create((set, get) => ({
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
+  avatarUrls: [
+    {
+      key: null,
+      value: null,
+    },
+  ],
+
+  getAvatarUrls: async () => {
+    try {
+      const res = await axiosRequest.get("/rooms");
+      console.log(res);
+    } catch (error) {
+      console.log(error);
+    }
+  },
 
   getUsers: async () => {
     set({ isUsersLoading: true });

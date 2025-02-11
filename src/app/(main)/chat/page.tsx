@@ -9,7 +9,6 @@ import axiosRequest from "@/config/axios";
 import { toast } from "react-toastify";
 import MessageInput from "@/app/(main)/message/MessageInput";
 import { useAuthStore } from "@/store/useAuthStore";
-import { set } from "react-hook-form";
 
 interface Message {
   file: any;
@@ -62,19 +61,11 @@ const Sidebar = () => {
       });
       setRoomId(response.room._id);
       setMessages(response.messages);
-      setSelectedRoom(response.room);
+      if (response.room) setSelectedRoom(response.room);
     } catch (error: any) {
       toast.error(error);
     }
   };
-
-  const logMessageType = () => {
-    messages.forEach((message) => {
-      console.log(message);
-    });
-  };
-
-  logMessageType();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -122,6 +113,7 @@ const Sidebar = () => {
         withCredentials: true,
       });
       setRooms(response.rooms);
+      console.log(response.rooms);
     } catch (error: any) {
       toast.error(error.message || "An error occurred while fetching rooms.");
     } finally {
@@ -231,34 +223,44 @@ const Sidebar = () => {
         </div>
 
         <div className="overflow-y-auto w-full py-3">
-          {rooms?.map((room: Room) => (
-            <button
-              key={room._id}
-              onClick={() => getRoomById(room._id)}
-              className={`w-full p-3 flex items-center gap-3 hover:bg-base-300 transition-colors ${
-                selectedRoom?._id === room._id
-                  ? "bg-base-300 ring-1 ring-base-300"
-                  : ""
-              }`}
-            >
-              <div className="relative mx-auto lg:mx-0">
-                <Image
-                  src={"/images/avatar.png"}
-                  alt={room?.name}
-                  className="size-12 object-cover rounded-full"
-                  width={20}
-                  height={20}
-                />
-              </div>
+          {rooms?.map((room: Room) => {
+            const admin = room.members.find(
+              (user: any) => user.user._id !== currrentUser._id
+            );
 
-              <div className="hidden lg:block text-left min-w-0">
-                <div className="font-medium truncate">{room?.name}</div>
-                <div className="text-sm text-zinc-400 truncate">
-                  {room?.lastMessage?.text || "Chưa có tin nhắn"}
+            console.log(admin);
+
+            return (
+              <button
+                key={room._id}
+                onClick={() => getRoomById(room._id)}
+                className={`w-full p-3 flex items-center gap-3 transition-colors ${
+                  selectedRoom?._id === room._id
+                    ? "bg-[#AA8BE2] ring-1 ring-base-300"
+                    : ""
+                }`}
+              >
+                <div className="relative mx-auto lg:mx-0">
+                  {admin?.user.avatar && (
+                    <Image
+                      src={admin.user.avatar}
+                      alt={room?.name}
+                      className="object-cover rounded-full"
+                      width={48}
+                      height={48}
+                    />
+                  )}
                 </div>
-              </div>
-            </button>
-          ))}
+
+                <div className="hidden lg:block text-left min-w-0">
+                  <div className="font-medium truncate">{room?.name}</div>
+                  <div className="text-sm text-zinc-400 truncate">
+                    {room?.lastMessage?.text || "Chưa có tin nhắn"}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
 
           {rooms?.length === 0 && (
             <div className="text-center text-zinc-500 py-4">
