@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
-import { Users } from "lucide-react";
-import Image from "next/image";
+import { useEffect, useState, useCallback, use, useRef } from "react";
+import { CircleUser, Users } from "lucide-react";
 import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
 import { getCookie } from "@/utils/cookies";
 import axiosRequest from "@/config/axios";
 import { toast } from "react-toastify";
 import MessageInput from "@/app/(main)/message/MessageInput";
 import { useAuthStore } from "@/store/useAuthStore";
+import { Avatar, Badge, Image } from "antd";
+import { FaCamera, FaInfo, FaPhone, FaRegUser } from "react-icons/fa6";
 
 interface Message {
   file: any;
@@ -42,6 +43,12 @@ const Sidebar = () => {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [currrentUser, setCurrentUser] = useState<any>(null);
   const jwt = getCookie("jwt");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Khi messages thay đổi, cuộn xuống tin nhắn mới nhất
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const { socket, connectSocket } = useAuthStore();
 
@@ -228,7 +235,7 @@ const Sidebar = () => {
               (user: any) => user.user._id !== currrentUser._id
             );
 
-            console.log(admin);
+            // console.log(admin);
 
             return (
               <button
@@ -236,25 +243,45 @@ const Sidebar = () => {
                 onClick={() => getRoomById(room._id)}
                 className={`w-full p-3 flex items-center gap-3 transition-colors ${
                   selectedRoom?._id === room._id
-                    ? "bg-[#AA8BE2] ring-1 ring-base-300"
+                    ? "bg-[#AA8BE2] rounded-lg"
                     : ""
                 }`}
               >
                 <div className="relative mx-auto lg:mx-0">
-                  {admin?.user.avatar && (
-                    <Image
-                      src={admin.user.avatar}
-                      alt={room?.name}
-                      className="object-cover rounded-full"
-                      width={48}
-                      height={48}
-                    />
-                  )}
+                  <Badge
+                    style={{
+                      fontSize: "12px", // Điều chỉnh dot to hơn (Ant Design dùng font-size để scale dot)
+                      width: "10px",
+                      height: "10px",
+                      minWidth: "10px",
+                    }}
+                    dot
+                    color="green"
+                    offset={[-5, 40]}
+                  >
+                    {admin?.user.avatar ? (
+                      <Avatar
+                        src={admin.user.avatar}
+                        // icon={<FaRegUser />}
+                        size={48}
+                        className="border border-gray-400 m-0"
+                      />
+                    ) : (
+                      <Avatar
+                        src={""}
+                        icon={<FaRegUser />}
+                        size={48}
+                        className="border border-gray-400 m-0"
+                      />
+                    )}
+                  </Badge>
                 </div>
 
                 <div className="hidden lg:block text-left min-w-0">
-                  <div className="font-medium truncate">{room?.name}</div>
-                  <div className="text-sm text-zinc-400 truncate">
+                  <div className="font-medium truncate">
+                    {admin?.user.fullName}
+                  </div>
+                  <div className="text-gray-400 text-sm text-zinc-400 truncate">
                     {room?.lastMessage?.text || "Chưa có tin nhắn"}
                   </div>
                 </div>
@@ -270,15 +297,35 @@ const Sidebar = () => {
         </div>
       </aside>
 
-      {messages.length !== 0 || rooms.length !== 0 ? (
-        <div className={"flex h-96 w-full flex-col mt-10"}>
-          <div className="flex-1 overflow-y-scroll h-96 p-4 space-y-3">
+      {roomId ? (
+        <div className="flex flex-col h-[700px] w-full mt-10 border">
+          {/* Vung detail user*/}
+          <div className="h-auto w-full border-b-2 py-2 px-6 flex justify-between">
+            <div className="flex items-center w-fit p-2 gap-2 rounded-lg cursor-pointer hover:bg-gray-200">
+              <Avatar src={""} icon={<FaRegUser />} size={48} />
+              <h1>Kien PT</h1>
+            </div>
+            <div className="flex gap-5 items-center">
+              <FaPhone
+                size={26}
+                className="text-blue-400 hover:bg-dark-200 rounded-lg"
+              />
+              <FaCamera
+                size={26}
+                className="text-blue-400 hover:bg-dark-200 rounded-lg"
+              />
+              <FaInfo
+                size={26}
+                className="text-blue-400 hover:bg-dark-200 rounded-lg"
+              />
+            </div>
+          </div>
+          {/* Vùng tin nhắn */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((message) => {
               const isCurrentUser =
                 message.sender.fullName === currrentUser.fullName;
               const isEditing = editingMessageId === message._id;
-
-              console.log(isEditing);
 
               return (
                 <div
@@ -307,7 +354,7 @@ const Sidebar = () => {
                         type="text"
                         value={editedText}
                         onChange={(e) => setEditedText(e.target.value)}
-                        className="border border-gray-300 bg-dark-200 rounded p-1 w-full"
+                        className="border border-gray-300 rounded p-1 w-full"
                       />
                     ) : (
                       renderMessage(message)
@@ -356,9 +403,12 @@ const Sidebar = () => {
                 </div>
               );
             })}
+            <div ref={chatEndRef}></div>
           </div>
-
-          <MessageInput roomId={roomId} sendMessage={sendMessage} />
+          {/* Message Input (Cố định dưới cùng) */}
+          <div className="p-2 bg-white border-t">
+            <MessageInput roomId={roomId} sendMessage={sendMessage} />
+          </div>
         </div>
       ) : (
         <div className="w-full h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
