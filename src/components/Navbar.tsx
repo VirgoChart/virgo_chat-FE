@@ -174,7 +174,7 @@ const Navbar = () => {
     try {
       setRequestText("Blocked");
       const res = await axiosRequest.post(
-        "/block-user",
+        "/relationships/block-user",
         {
           userId: userInfo._id,
         },
@@ -253,6 +253,14 @@ const Navbar = () => {
               className="btn btn-sm gap-2 transition-colors"
             >
               <Settings className="w-4 h-4" />
+            </Link>
+
+            <Link
+              title="Xem danh sách chặn"
+              href={"/blocked-user"}
+              className="btn btn-sm gap-2 transition-colors"
+            >
+              <GoBlocked className="w-4 h-4" />
             </Link>
 
             {!user ? (

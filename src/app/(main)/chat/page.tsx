@@ -235,8 +235,6 @@ const Sidebar = () => {
               (user: any) => user.user._id !== currrentUser._id
             );
 
-            // console.log(admin);
-
             return (
               <button
                 key={room._id}
@@ -250,7 +248,7 @@ const Sidebar = () => {
                 <div className="relative mx-auto lg:mx-0">
                   <Badge
                     style={{
-                      fontSize: "12px", // Điều chỉnh dot to hơn (Ant Design dùng font-size để scale dot)
+                      fontSize: "12px",
                       width: "10px",
                       height: "10px",
                       minWidth: "10px",
