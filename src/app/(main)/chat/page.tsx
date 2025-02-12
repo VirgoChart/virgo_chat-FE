@@ -228,8 +228,6 @@ const Sidebar = () => {
               (user: any) => user.user._id !== currrentUser._id
             );
 
-            console.log(admin);
-
             return (
               <button
                 key={room._id}
@@ -277,8 +275,6 @@ const Sidebar = () => {
               const isCurrentUser =
                 message.sender.fullName === currrentUser.fullName;
               const isEditing = editingMessageId === message._id;
-
-              console.log(isEditing);
 
               return (
                 <div
