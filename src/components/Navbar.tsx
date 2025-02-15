@@ -170,14 +170,22 @@ const Navbar = () => {
     return dayjs(dateString).format("DD/MM/YYYY");
   };
 
-  // const blockUser = async () => {
-  //   try {
+  const blockUser = async () => {
+    try {
+      setRequestText("Blocked");
+      const res = await axiosRequest.post(
+        "/relationships/block-user",
+        {
+          userId: userInfo._id,
+        },
+        { withCredentials: true }
+      );
 
-  //     const res = await``
-  //   } catch (error: any) {
-  //     toast.error(error);
-  //   }
-  // };
+      toast.success(res.message);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
 
   return (
     <header className="bg-[#AA8BE2] border-b border-base-300 fixed w-full top-0 z-40 backdrop-blur-lg">
@@ -245,6 +253,14 @@ const Navbar = () => {
               className="btn btn-sm gap-2 transition-colors"
             >
               <Settings className="w-4 h-4" />
+            </Link>
+
+            <Link
+              title="Xem danh sách chặn"
+              href={"/blocked-user"}
+              className="btn btn-sm gap-2 transition-colors"
+            >
+              <GoBlocked className="w-4 h-4" />
             </Link>
 
             {!user ? (
@@ -369,7 +385,10 @@ const Navbar = () => {
               </h2>
 
               <div className="flex gap-4 mt-4">
-                <button className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-4 py-2 transition-all">
+                <button
+                  onClick={blockUser}
+                  className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
+                >
                   <GoBlocked size={16} />
                   <span>Block</span>
                 </button>

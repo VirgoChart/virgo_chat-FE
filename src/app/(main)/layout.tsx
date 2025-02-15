@@ -45,7 +45,7 @@ export default function MainLayout({
         {/* <Sidebar socket={socket} /> */}
         <div className="flex flex-1 flex-col">{children}</div>
 
-        <Footer />
+        {/* <Footer /> */}
       </div>
     </div>
   );

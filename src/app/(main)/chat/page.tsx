@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback, use } from "react";
-import { Users } from "lucide-react";
-import Image from "next/image";
+import { useEffect, useState, useCallback, use, useRef } from "react";
+import { CircleUser, Users } from "lucide-react";
 import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
 import { getCookie } from "@/utils/cookies";
 import axiosRequest from "@/config/axios";
 import { toast } from "react-toastify";
 import MessageInput from "@/app/(main)/message/MessageInput";
 import { useAuthStore } from "@/store/useAuthStore";
-import { set } from "react-hook-form";
+import { Avatar, Badge, Image } from "antd";
+import { FaCamera, FaInfo, FaPhone, FaRegUser } from "react-icons/fa6";
 
 interface Message {
   file: any;
@@ -43,6 +43,12 @@ const Sidebar = () => {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [currrentUser, setCurrentUser] = useState<any>(null);
   const jwt = getCookie("jwt");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Khi messages thay đổi, cuộn xuống tin nhắn mới nhất
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const { socket, connectSocket } = useAuthStore();
 
@@ -62,19 +68,11 @@ const Sidebar = () => {
       });
       setRoomId(response.room._id);
       setMessages(response.messages);
-      setSelectedRoom(response.room);
+      if (response.room) setSelectedRoom(response.room);
     } catch (error: any) {
       toast.error(error);
     }
   };
-
-  const logMessageType = () => {
-    messages.forEach((message) => {
-      console.log(message);
-    });
-  };
-
-  logMessageType();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -122,6 +120,7 @@ const Sidebar = () => {
         withCredentials: true,
       });
       setRooms(response.rooms);
+      console.log(response.rooms);
     } catch (error: any) {
       toast.error(error.message || "An error occurred while fetching rooms.");
     } finally {
@@ -211,8 +210,8 @@ const Sidebar = () => {
           src={message.image}
           alt="Image message"
           className="object-contain"
-          width={500}
-          height={500}
+          width={200}
+          height={200}
         />
       );
     }
@@ -221,44 +220,78 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="flex h-full gap-10 p-10">
-      <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200 mt-20">
+    <div className="flex h-full p-10">
+      <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10">
         <div className="border-b border-base-300 w-full p-5">
-          <div className="flex items-center gap-2">
-            <Users className="size-6" />
-            <span className="font-medium hidden lg:block">Danh sách phòng</span>
+          <div className="flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
+              <Users className="size-6" />
+              <span className="font-medium hidden lg:block">Bạn bè</span>
+            </div>
+            <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
+              <Users className="size-6" />
+              <span className="font-medium hidden lg:block">Nhóm</span>
+            </div>
           </div>
         </div>
 
         <div className="overflow-y-auto w-full py-3">
-          {rooms?.map((room: Room) => (
-            <button
-              key={room._id}
-              onClick={() => getRoomById(room._id)}
-              className={`w-full p-3 flex items-center gap-3 hover:bg-base-300 transition-colors ${
-                selectedRoom?._id === room._id
-                  ? "bg-base-300 ring-1 ring-base-300"
-                  : ""
-              }`}
-            >
-              <div className="relative mx-auto lg:mx-0">
-                <Image
-                  src={"/images/avatar.png"}
-                  alt={room?.name}
-                  className="size-12 object-cover rounded-full"
-                  width={20}
-                  height={20}
-                />
-              </div>
+          {rooms?.map((room: Room) => {
+            const admin = room.members.find(
+              (user: any) => user.user._id !== currrentUser._id
+            );
 
-              <div className="hidden lg:block text-left min-w-0">
-                <div className="font-medium truncate">{room?.name}</div>
-                <div className="text-sm text-zinc-400 truncate">
-                  {room?.lastMessage?.text || "Chưa có tin nhắn"}
+            return (
+              <button
+                key={room._id}
+                onClick={() => getRoomById(room._id)}
+                className={`w-full p-3 flex items-center gap-3 transition-colors ${
+                  selectedRoom?._id === room._id
+                    ? "bg-[#AA8BE2] rounded-lg"
+                    : ""
+                }`}
+              >
+                <div className="relative mx-auto lg:mx-0">
+                  <Badge
+                    style={{
+                      fontSize: "12px",
+                      width: "10px",
+                      height: "10px",
+                      minWidth: "10px",
+                    }}
+                    dot
+                    color="green"
+                    offset={[-5, 40]}
+                  >
+                    {admin?.user.avatar ? (
+                      <Avatar
+                        src={admin.user.avatar}
+                        // icon={<FaRegUser />}
+                        size={48}
+                        className="border border-gray-400 m-0"
+                      />
+                    ) : (
+                      <Avatar
+                        src={""}
+                        icon={<FaRegUser />}
+                        size={48}
+                        className="border border-gray-400 m-0"
+                      />
+                    )}
+                  </Badge>
                 </div>
-              </div>
-            </button>
-          ))}
+
+                <div className="hidden lg:block text-left min-w-0">
+                  <div className="font-medium truncate">
+                    {admin?.user.fullName}
+                  </div>
+                  <div className="text-gray-400 text-sm text-zinc-400 truncate">
+                    {room?.lastMessage?.text || "Chưa có tin nhắn"}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
 
           {rooms?.length === 0 && (
             <div className="text-center text-zinc-500 py-4">
@@ -268,95 +301,137 @@ const Sidebar = () => {
         </div>
       </aside>
 
-      {messages.length !== 0 || rooms.length !== 0 ? (
-        <div className={"flex h-96 w-full flex-col mt-10"}>
-          <div className="flex-1 overflow-y-scroll h-96 p-4 space-y-3">
-            {messages.map((message) => {
-              const isCurrentUser =
-                message.sender.fullName === currrentUser.fullName;
-              const isEditing = editingMessageId === message._id;
+      {roomId ? (
+        <div className="flex flex-1 items-center">
+          <div className="flex flex-col h-[550px] w-full mt-10 border">
+            {/* Vung detail user*/}
 
-              console.log(isEditing);
+            {/* Vùng tin nhắn */}
+            <div className="overflow-y-auto p-4 space-y-3 h-[400px]">
+              {messages.map((message) => {
+                const isCurrentUser =
+                  message.sender.fullName === currrentUser.fullName;
+                const isEditing = editingMessageId === message._id;
 
-              return (
-                <div
-                  key={message._id}
-                  className={`relative w-fit p-3 border rounded-md shadow-sm bg-white hover:bg-gray-50 group ${
-                    isCurrentUser
-                      ? "ml-auto text-right bg-blue-200"
-                      : "mr-auto text-left bg-gray-100"
-                  }`}
-                  style={{ maxWidth: "70%" }}
-                >
-                  <div className="flex justify-between items-center">
-                    <span
-                      className={`font-semibold ${isCurrentUser ? "text-blue-500" : "text-gray-700"}`}
-                    >
-                      {message.sender.fullName}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      {new Date(message.createdAt).toLocaleString()}
-                    </span>
-                  </div>
+                return (
+                  <div
+                    key={message._id}
+                    className={`relative w-fit p-3 border rounded-md shadow-sm bg-white hover:bg-gray-50 group ${
+                      isCurrentUser
+                        ? "ml-auto text-right bg-blue-200"
+                        : "mr-auto text-left bg-gray-100"
+                    }`}
+                    style={{ maxWidth: "70%" }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span
+                        className={`font-semibold ${isCurrentUser ? "text-blue-500" : "text-gray-700"}`}
+                      >
+                        {message.sender.fullName}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {new Date(message.createdAt).toLocaleString()}
+                      </span>
+                    </div>
 
-                  <div className="mt-2 text-gray-700">
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        value={editedText}
-                        onChange={(e) => setEditedText(e.target.value)}
-                        className="border border-gray-300 bg-dark-200 rounded p-1 w-full"
-                      />
-                    ) : (
-                      renderMessage(message)
-                    )}
-                  </div>
-
-                  {/* Hiển thị nút khi hover */}
-                  {isCurrentUser && (
-                    <div className="absolute top-6 right-full hidden group-hover:flex gap-2 p-2">
+                    <div className="mt-2 text-gray-700">
                       {isEditing ? (
-                        <>
-                          <button
-                            onClick={() => handleUpdate(message._id)}
-                            className="text-green-600 hover:underline"
-                          >
-                            Lưu
-                          </button>
-                          <button
-                            onClick={() => setEditingMessageId(null)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Hủy
-                          </button>
-                        </>
+                        <input
+                          type="text"
+                          value={editedText}
+                          onChange={(e) => setEditedText(e.target.value)}
+                          className="border border-gray-300 rounded p-1 w-full"
+                        />
                       ) : (
-                        <>
-                          <button
-                            onClick={() => {
-                              setEditingMessageId(message._id);
-                              setEditedText(message.text);
-                            }}
-                            className="text-blue-600 hover:underline"
-                          >
-                            Sửa
-                          </button>
-                          <button
-                            onClick={() => handleDelete(message._id)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Xóa
-                          </button>
-                        </>
+                        renderMessage(message)
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+
+                    {/* Hiển thị nút khi hover */}
+                    {isCurrentUser && (
+                      <div className="absolute top-6 right-full hidden group-hover:flex gap-2 p-2">
+                        {isEditing ? (
+                          <>
+                            <button
+                              onClick={() => handleUpdate(message._id)}
+                              className="text-green-600 hover:underline"
+                            >
+                              Lưu
+                            </button>
+                            <button
+                              onClick={() => setEditingMessageId(null)}
+                              className="text-red-600 hover:underline"
+                            >
+                              Hủy
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingMessageId(message._id);
+                                setEditedText(message.text);
+                              }}
+                              className="text-blue-600 hover:underline"
+                            >
+                              Sửa
+                            </button>
+                            <button
+                              onClick={() => handleDelete(message._id)}
+                              className="text-red-600 hover:underline"
+                            >
+                              Xóa
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div ref={chatEndRef}></div>
+            </div>
+
+            <div className="p-2 bg-white border-t">
+              <MessageInput roomId={roomId} sendMessage={sendMessage} />
+            </div>
           </div>
 
-          <MessageInput roomId={roomId} sendMessage={sendMessage} />
+          <div className="h-[550px] mt-10 border w-96 border-gray-300 flex flex-col">
+            {/* Top section with circles */}
+            <div className="p-4 flex flex-col items-center border-b border-gray-300">
+              <div className="w-16 h-16 rounded-full bg-gray-300 mb-2"></div>
+              <div className="flex gap-2">
+                <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+                <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+                <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+              </div>
+            </div>
+
+            {/* Middle section with two equal boxes */}
+            <div className="flex border-b border-blue-500">
+              <div className="w-1/2 h-20 bg-gray-300 border-r border-blue-500"></div>
+              <div className="w-1/2 h-20 bg-gray-300"></div>
+            </div>
+
+            {/* Bottom section with one large box */}
+            <div className="flex-1 bg-gray-300 overflow-y-auto max-h-[600px] p-2">
+              <div className="grid grid-cols-2 gap-2">
+                {messages.map((message, index) =>
+                  message.image ? (
+                    <Image
+                      key={index}
+                      src={message.image}
+                      alt={`Room Image ${index + 1}`}
+                      className="w-full h-40 object-cover rounded-lg"
+                      width={110}
+                      height={110}
+                    />
+                  ) : null
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="w-full h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
