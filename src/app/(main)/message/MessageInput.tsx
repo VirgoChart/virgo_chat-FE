@@ -16,7 +16,7 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
   const [fileBase64, setFileBase64] = useState<string | null>(null);
   const [fileType, setFileType] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
-  const [fileKey, setFileKey] = useState(Date.now()); 
+  const [fileKey, setFileKey] = useState(Date.now());
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
@@ -26,7 +26,7 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
       reader.onloadend = () => {
         setFileBase64(reader.result?.toString() || "");
         setFileType(selectedFile.type);
-        setFileKey(Date.now()); 
+        setFileKey(Date.now());
       };
     }
   };
@@ -52,7 +52,10 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col p-4 bg-gray-100 border-t">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col flex-0"
+    >
       {/* Hiển thị ảnh xem trước nếu là file ảnh */}
       {fileBase64 && fileType?.startsWith("image/") && (
         <div className="relative mb-2 w-24 h-24">
@@ -72,7 +75,10 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
       )}
 
       <div className="flex items-center gap-2">
-        <label htmlFor="file-input" className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition">
+        <label
+          htmlFor="file-input"
+          className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition"
+        >
           <Paperclip size={20} className="text-gray-600" />
           <input
             key={fileKey} // Reset input mỗi khi chọn file mới
