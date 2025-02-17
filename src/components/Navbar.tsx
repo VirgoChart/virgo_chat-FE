@@ -146,7 +146,7 @@ const Navbar = () => {
         "/notifications/create",
         {
           receiverIds: [userInfo._id],
-          roomType: "group",
+          roomType: "private",
         },
         { withCredentials: true }
       );

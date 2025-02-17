@@ -99,15 +99,6 @@ export const useAuthStore = create((set, get) => ({
     socket.on("newNotification", (notification) => {
       toast.success(notification.content);
     });
-
-    socket.on("newMessage", (message) => {
-      toast.success(message.content);
-    });
-
-    socket.on("disconnect", () => {
-      console.log("Socket disconnected");
-      set({ socket: null });
-    });
   },
 
   disconnectSocket: () => {

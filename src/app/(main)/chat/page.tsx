@@ -143,20 +143,35 @@ const Sidebar = () => {
     }
 
     try {
-      const response = await axiosRequest.post(
-        "/messages/create",
-        {
-          roomId: roomId,
-          text,
-          image: fileBase64,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${jwt}`,
-          },
-          withCredentials: true,
-        }
-      );
+      const requests = [];
+
+      if (text) {
+        requests.push(
+          axiosRequest.post(
+            "/messages/create",
+            { roomId, text },
+            {
+              headers: { Authorization: `Bearer ${jwt}` },
+              withCredentials: true,
+            }
+          )
+        );
+      }
+
+      if (fileBase64) {
+        requests.push(
+          axiosRequest.post(
+            "/messages/create",
+            { roomId, image: fileBase64 },
+            {
+              headers: { Authorization: `Bearer ${jwt}` },
+              withCredentials: true,
+            }
+          )
+        );
+      }
+
+      await Promise.all(requests); // Gửi cả hai request đồng thời
       getRoomById(roomId);
     } catch (err: any) {
       toast.error(err);
