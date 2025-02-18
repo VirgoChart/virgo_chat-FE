@@ -9,7 +9,17 @@ import { toast } from "react-toastify";
 import MessageInput from "@/app/(main)/message/MessageInput";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Avatar, Badge, Image } from "antd";
-import { FaCamera, FaInfo, FaPhone, FaRegUser } from "react-icons/fa6";
+import {
+  FaCamera,
+  FaInfo,
+  FaPhone,
+  FaRegTrashCan,
+  FaRegUser,
+} from "react-icons/fa6";
+import {
+  IoIosInformationCircleOutline,
+  IoMdNotificationsOutline,
+} from "react-icons/io";
 
 interface Message {
   file: any;
@@ -43,6 +53,7 @@ const Sidebar = () => {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [currrentUser, setCurrentUser] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [blockedUsers, setBlockedUsers] = useState<any>([]);
   const jwt = getCookie("jwt");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -70,6 +81,7 @@ const Sidebar = () => {
       });
       setRoomId(response.room._id);
       setMessages(response.messages);
+      setBlockedUsers(response.room.blockedMembers);
       if (response.room) setSelectedRoom(response.room);
     } catch (error: any) {
       toast.error(error);
@@ -174,7 +186,7 @@ const Sidebar = () => {
       }
 
       await Promise.all(requests);
-      getRoomById(roomId);
+      getRoomById(roomId, selectedUser);
     } catch (err: any) {
       toast.error(err);
     }
@@ -196,7 +208,7 @@ const Sidebar = () => {
 
       setEditingMessageId(null);
       setEditedText("");
-      getRoomById(roomId);
+      getRoomById(roomId, selectedUser);
     } catch (error) {
       console.error("Lỗi khi cập nhật tin nhắn", error);
     }
@@ -210,7 +222,7 @@ const Sidebar = () => {
       });
       console.log(res);
       toast.success("Đã xóa tin nhắn");
-      getRoomById(roomId);
+      getRoomById(roomId, selectedUser);
     } catch (error) {
       console.error("Lỗi khi xóa tin nhắn", error);
     }
@@ -238,7 +250,7 @@ const Sidebar = () => {
 
   return (
     <div className="flex h-full p-10">
-      <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10 p-2">
+      <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10">
         <div className="border-b border-base-300 w-full p-5">
           <div className="flex items-center gap-2 justify-between">
             <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
@@ -263,9 +275,7 @@ const Sidebar = () => {
                 key={room._id}
                 onClick={() => getRoomById(room._id, admin)}
                 className={`w-full p-3 flex items-center gap-3 transition-colors ${
-                  selectedRoom?._id === room._id
-                    ? "bg-[#AA8BE2] rounded-lg"
-                    : ""
+                  selectedRoom?._id === room._id ? "bg-green-200" : ""
                 }`}
               >
                 <div className="relative mx-auto lg:mx-0">
@@ -332,7 +342,9 @@ const Sidebar = () => {
                   size={48}
                   className="border border-gray-400 m-0"
                 />{" "}
-                <h1>{selectedUser?.user.fullName}</h1>{" "}
+                <h1 className="text-xl font-bold">
+                  {selectedUser?.user.fullName}
+                </h1>{" "}
               </div>{" "}
               <div className="flex gap-5 items-center">
                 {" "}
@@ -360,9 +372,9 @@ const Sidebar = () => {
                 return (
                   <div
                     key={message._id}
-                    className={`relative w-fit p-3 border rounded-md shadow-sm bg-white hover:bg-gray-50 group ${
+                    className={`relative w-fit p-3 border rounded-md shadow-sm hover:bg-gray-50 group ${
                       isCurrentUser
-                        ? "ml-auto text-right bg-blue-200"
+                        ? "ml-auto text-right bg-green-200"
                         : "mr-auto text-left bg-gray-100"
                     }`}
                     style={{ maxWidth: "70%" }}
@@ -435,20 +447,59 @@ const Sidebar = () => {
               })}
               <div ref={chatEndRef}></div>
             </div>
-
-            <div className="p-2 bg-white border-t">
-              <MessageInput roomId={roomId} sendMessage={sendMessage} />
-            </div>
+            {/* Vùng nhập tin nhắn */}
+            {blockedUsers.map((user: any) => {
+              if (user._id !== selectedUser.user._id) {
+                return (
+                  <div key={user._id} className="p-2 bg-white border-t">
+                    <p className="text-red-500 text-center">
+                      Bạn đã bị chặn tin nhắn trong nhóm này
+                    </p>
+                  </div>
+                );
+              } else {
+                return (
+                  <div key={user._id} className="p-2 bg-white border-t">
+                    <p className="text-red-500 text-center">
+                      Bạn đã chặn người này
+                    </p>
+                  </div>
+                );
+              }
+            })}
+            {(() => {
+              const isBlocked = blockedUsers.some(
+                (user: any) => user._id === selectedUser.user._id
+              );
+              if (!isBlocked) {
+                return (
+                  <div className="p-2 bg-white border-t">
+                    <MessageInput roomId={roomId} sendMessage={sendMessage} />
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           <div className="h-[550px] mt-10 border w-96 border-gray-300 flex flex-col">
             {/* Top section with circles */}
-            <div className="p-4 flex flex-col items-center border-b border-gray-300">
-              <div className="w-16 h-16 rounded-full bg-gray-300 mb-2"></div>
-              <div className="flex gap-2">
-                <div className="w-10 h-10 rounded-full bg-gray-300"></div>
-                <div className="w-10 h-10 rounded-full bg-gray-300"></div>
-                <div className="w-10 h-10 rounded-full bg-gray-300"></div>
+            <div className="p-4 flex flex-col items-center border-b border-gray-300 gap-2">
+              <Avatar
+                src={selectedUser?.user.avatar}
+                size={70}
+                className="border border-gray-300"
+              />
+              <div className="flex gap-2 text-white">
+                <div className="w-12 h-12 rounded-full bg-green-500 flex justify-center items-center cursor-pointer">
+                  <IoMdNotificationsOutline />
+                </div>
+                <div className="w-12 h-12 rounded-full bg-red-300 flex justify-center items-center cursor-pointer">
+                  <FaRegTrashCan />
+                </div>
+                <div className="w-12 h-12 rounded-full bg-blue-300 flex justify-center items-center cursor-pointer">
+                  <IoIosInformationCircleOutline />
+                </div>
               </div>
             </div>
 
@@ -459,8 +510,8 @@ const Sidebar = () => {
             </div>
 
             {/* Bottom section with one large box */}
-            <div className="flex-1 bg-gray-300 overflow-y-auto max-h-[600px] p-2">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="flex-1 bg-gray-100 overflow-y-auto max-h-[600px] p-2">
+              <div className="grid grid-cols-2 gap-2 place-items-center">
                 {messages.map((message, index) =>
                   message.image ? (
                     <Image
@@ -478,7 +529,7 @@ const Sidebar = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full ml-4 h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
+        <div className="w-4/5 ml-4 h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
           <div className="max-w-md">
             <Image
               src="/images/logoVirgo.png"
