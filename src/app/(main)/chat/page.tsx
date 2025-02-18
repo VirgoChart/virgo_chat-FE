@@ -42,6 +42,7 @@ const Sidebar = () => {
   const [roomId, setRoomId] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [currrentUser, setCurrentUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const jwt = getCookie("jwt");
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -58,7 +59,8 @@ const Sidebar = () => {
     }
   }, []);
 
-  const getRoomById = async (roomId: string) => {
+  const getRoomById = async (roomId: string, user: any) => {
+    setSelectedUser(user);
     try {
       const response = await axiosRequest.get(`/rooms/${roomId}`, {
         headers: {
@@ -236,7 +238,7 @@ const Sidebar = () => {
 
   return (
     <div className="flex h-full p-10">
-      <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10">
+      <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10 p-2">
         <div className="border-b border-base-300 w-full p-5">
           <div className="flex items-center gap-2 justify-between">
             <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
@@ -259,7 +261,7 @@ const Sidebar = () => {
             return (
               <button
                 key={room._id}
-                onClick={() => getRoomById(room._id)}
+                onClick={() => getRoomById(room._id, admin)}
                 className={`w-full p-3 flex items-center gap-3 transition-colors ${
                   selectedRoom?._id === room._id
                     ? "bg-[#AA8BE2] rounded-lg"
@@ -320,7 +322,34 @@ const Sidebar = () => {
         <div className="flex flex-1 items-center">
           <div className="flex flex-col h-[550px] w-full mt-10 border">
             {/* Vung detail user*/}
-
+            <div className="h-auto w-full border-b-2 py-2 px-6 flex justify-between">
+              {" "}
+              <div className="flex items-center w-fit p-2 gap-2 rounded-lg cursor-pointer hover:bg-gray-200">
+                {" "}
+                <Avatar
+                  src={selectedUser?.user.avatar}
+                  icon={<FaRegUser />}
+                  size={48}
+                  className="border border-gray-400 m-0"
+                />{" "}
+                <h1>{selectedUser?.user.fullName}</h1>{" "}
+              </div>{" "}
+              <div className="flex gap-5 items-center">
+                {" "}
+                <FaPhone
+                  size={26}
+                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                />{" "}
+                <FaCamera
+                  size={26}
+                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                />{" "}
+                <FaInfo
+                  size={26}
+                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                />{" "}
+              </div>{" "}
+            </div>
             {/* Vùng tin nhắn */}
             <div className="overflow-y-auto p-4 space-y-3 h-[400px]">
               {messages.map((message) => {
