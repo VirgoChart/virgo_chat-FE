@@ -171,7 +171,7 @@ const Sidebar = () => {
         );
       }
 
-      await Promise.all(requests); // Gửi cả hai request đồng thời
+      await Promise.all(requests);
       getRoomById(roomId);
     } catch (err: any) {
       toast.error(err);
@@ -321,6 +321,27 @@ const Sidebar = () => {
           <div className="flex flex-col h-[550px] w-full mt-10 border">
             {/* Vung detail user*/}
 
+            <div className="h-auto w-full border-b-2 py-2 px-6 flex justify-between">
+              <div className="flex items-center w-fit p-2 gap-2 rounded-lg cursor-pointer hover:bg-gray-200">
+                <Avatar src={""} icon={<FaRegUser />} size={48} />
+                <h1>Kien PT</h1>
+              </div>
+              <div className="flex gap-5 items-center">
+                <FaPhone
+                  size={26}
+                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                />
+                <FaCamera
+                  size={26}
+                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                />
+                <FaInfo
+                  size={26}
+                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                />
+              </div>
+            </div>
+
             {/* Vùng tin nhắn */}
             <div className="overflow-y-auto p-4 space-y-3 h-[400px]">
               {messages.map((message) => {
@@ -449,7 +470,7 @@ const Sidebar = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
+        <div className="w-full ml-4 h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
           <div className="max-w-md">
             <Image
               src="/images/logoVirgo.png"
