@@ -10,7 +10,7 @@ import axiosRequest from "@/config/axios";
 import { getCookie } from "@/utils/cookies";
 import { toast } from "react-toastify";
 import { GoBlocked } from "react-icons/go";
-import { AutoComplete, Input, Modal } from "antd";
+import { AutoComplete, Avatar, Input, Modal } from "antd";
 import { FaRegMessage } from "react-icons/fa6";
 import { useAuthStore } from "../store/useAuthStore";
 import NotificationDropdown from "./NotificationDropdown";
@@ -374,12 +374,11 @@ const Navbar = () => {
           <div className="p-6 bg-white rounded-lg relative">
             <div className="flex flex-col items-center gap-4">
               <div className="w-24 h-24">
-                <Image
-                  src={userInfo.avatar || ""}
-                  width={96}
-                  height={96}
-                  alt="Avatar"
-                  className="object-cover rounded-full shadow-md"
+                <Avatar
+                  src={userInfo?.avatar || ""}
+                  size={100}
+                  // alt="Avatar"
+                  className="border border-gray-400 m-0"  
                 />
               </div>
               <h2 className="text-xl font-semibold text-gray-800">
