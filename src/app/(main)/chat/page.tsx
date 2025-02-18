@@ -173,7 +173,7 @@ const Sidebar = () => {
         );
       }
 
-      await Promise.all(requests); // Gửi cả hai request đồng thời
+      await Promise.all(requests);
       getRoomById(roomId);
     } catch (err: any) {
       toast.error(err);
@@ -478,7 +478,7 @@ const Sidebar = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
+        <div className="w-full ml-4 h-full rounded-lg p-10 flex items-center justify-center bg-[#AA8BE2] text-white text-center px-6 mt-20">
           <div className="max-w-md">
             <Image
               src="/images/logoVirgo.png"

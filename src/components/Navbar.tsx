@@ -17,6 +17,7 @@ import NotificationDropdown from "./NotificationDropdown";
 import { Drawer } from "antd";
 import { set } from "react-hook-form";
 import dayjs from "dayjs";
+import { FaUserAstronaut } from "react-icons/fa";
 
 const Navbar = () => {
   const { logOut, socket } = useAuthStore();
@@ -40,6 +41,7 @@ const Navbar = () => {
   const [userId, setUserId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [userInfo, setUserInfo] = useState<{
+    relationshipType: string;
     _id?: string;
     avatar?: string;
     userName?: string;
@@ -392,13 +394,23 @@ const Navbar = () => {
                   <span>Block</span>
                 </button>
 
-                <button
-                  onClick={sendMessageRequest}
-                  className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
-                >
-                  <FaRegMessage size={16} />
-                  <span>{requestText}</span>
-                </button>
+                {userInfo.relationshipType === "friend" ? (
+                  <button
+                    onClick={() => toast.success("Các bạn đã là bạn bè")}
+                    className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
+                  >
+                    <FaUserAstronaut size={16} />
+                    <span>Bạn bè</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={sendMessageRequest}
+                    className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
+                  >
+                    <FaRegMessage size={16} />
+                    <span>{requestText}</span>
+                  </button>
+                )}
 
                 {requestText === "Đang chờ xác nhận ..." && (
                   <button className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-4 py-2 transition-all">
