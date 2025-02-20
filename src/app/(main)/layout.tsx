@@ -1,11 +1,9 @@
 "use client";
 
-import Footer from "@/layouts/Footer";
 import { ReactNode, useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { Loader } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
-import Sidebar from "@/components/Sidebar";
 
 export default function MainLayout({
   children,
@@ -41,11 +39,7 @@ export default function MainLayout({
     <div>
       <div className="flex flex-col min-h-screen">
         <Navbar />
-
-        {/* <Sidebar socket={socket} /> */}
         <div className="flex flex-1 flex-col">{children}</div>
-
-        {/* <Footer /> */}
       </div>
     </div>
   );

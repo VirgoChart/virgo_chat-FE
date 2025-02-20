@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, useState } from "react";
-import { Eye, EyeInvisible } from "@/components/icons";
+import { Eye, EyeClosed } from "lucide-react";
 import Input, { InputProps } from "./Input";
 
 interface InputPasswordProps extends Omit<InputProps, "icon"> {}
@@ -18,7 +18,7 @@ const InputPassword = forwardRef<HTMLInputElement, InputPasswordProps>(
         className="cursor-pointer text-dark-300"
         onClick={togglePasswordVisibility}
       >
-        {isShowPassword ? <EyeInvisible /> : <Eye />}
+        {isShowPassword ? <EyeClosed /> : <Eye />}
       </div>
     );
 

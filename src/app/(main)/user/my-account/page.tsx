@@ -14,7 +14,9 @@ import { useRouter } from "next/navigation";
 
 const ProfilePage = () => {
   const { isUpdatingProfile, updateProfile, logOut } = useAuthStore();
-  const [selectedImg, setSelectedImg] = useState(null);
+  const [selectedImg, setSelectedImg] = useState<string | ArrayBuffer | null>(
+    null
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +33,7 @@ const ProfilePage = () => {
     logOut();
   };
 
-  const authUser = JSON.parse(window.localStorage.getItem("authUser"));
+  const authUser = JSON.parse(window.localStorage.getItem("authUser") || "{}");
   const authToken = getCookie("jwt");
 
   const [formData, setFormData] = useState({

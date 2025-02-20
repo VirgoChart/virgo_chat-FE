@@ -1,6 +1,6 @@
 "use client";
 
-import { Spin } from "@/components/icons";
+import { Spin } from "antd";
 import { cn } from "@/config/utils";
 import { ReactNode, memo } from "react";
 

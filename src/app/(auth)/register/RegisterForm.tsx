@@ -3,24 +3,15 @@
 import AuthImagePattern from "@/components/AuthImagePattern";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useGoogleLogin } from "@react-oauth/google";
-import { Google } from "@/components/icons";
+import { FaGoogle } from "react-icons/fa6";
 
-import {
-  Eye,
-  EyeOff,
-  Loader2,
-  Lock,
-  Mail,
-  MessageSquare,
-  User,
-} from "lucide-react";
+import { Eye, EyeOff, Loader2, Lock, Mail, User } from "lucide-react";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import axiosRequest from "@/config/axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import CheckableTag from "antd/es/tag/CheckableTag";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -294,7 +285,7 @@ export default function RegisterForm() {
             onClick={gg}
             className="px-4 cursor-pointer hover:opacity-75 py-2 w-full rounded-lg bg-white border-2 border-[#8361B7] flex items-center justify-center gap-4"
           >
-            <Google />
+            <FaGoogle />
             <span>Đăng nhập bằng google</span>
           </div>
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Paperclip, Send, XCircle } from "lucide-react";
+import Image from "next/image";
 
 interface MessageInputProps {
   roomId: string;
@@ -52,17 +53,16 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col flex-0"
-    >
+    <form onSubmit={handleSubmit} className="flex flex-col flex-0">
       {/* Hiển thị ảnh xem trước nếu là file ảnh */}
       {fileBase64 && fileType?.startsWith("image/") && (
         <div className="relative mb-2 w-24 h-24">
-          <img
+          <Image
             src={fileBase64}
             alt="image-review"
             className="w-full h-full object-cover rounded-lg border"
+            width={10}
+            height={10}
           />
           <button
             type="button"
@@ -81,7 +81,7 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
         >
           <Paperclip size={20} className="text-gray-600" />
           <input
-            key={fileKey} // Reset input mỗi khi chọn file mới
+            key={fileKey}
             id="file-input"
             type="file"
             onChange={handleFileChange}

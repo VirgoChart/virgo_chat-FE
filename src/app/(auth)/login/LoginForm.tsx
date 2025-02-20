@@ -5,11 +5,11 @@ import { useAuthStore } from "@/store/useAuthStore";
 import AuthImagePattern from "@/components/AuthImagePattern";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2, Lock, Mail, MessageSquare } from "lucide-react";
+import { FaGoogle } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import axiosRequest from "@/config/axios";
 import { toast } from "react-toastify";
 import { useGoogleLogin } from "@react-oauth/google";
-import { Google } from "@/components/icons";
 import { TbFaceId } from "react-icons/tb";
 import FaceID from "@/components/FaceID";
 import Image from "next/image";
@@ -199,7 +199,7 @@ const LoginPage = () => {
                 onClick={gg}
                 className="hover:opacity-75 cursor-pointer px-4 py-2 rounded-lg border-2 border-[#8361B7] flex items-center justify-center gap-4"
               >
-                <Google />
+                <FaGoogle />
                 <span>Đăng nhập bằng google</span>
               </div>
             </div>

@@ -1,39 +1,18 @@
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import React from "react";
 import Link from "next/link";
-import {
-  LogoFurniture,
-  Instagram,
-  Facebook,
-  Twitter,
-} from "@/components/icons";
-
-const aboutCategories = [
-  { name: "Trang chủ", link: "#" },
-  { name: "Sản phẩm", link: "#" },
-  { name: "Tin tức", link: "#" },
-  { name: "Voucher", link: "#" },
-  { name: "Combo giảm giá", link: "#" },
-];
-
-const customerSupportCategories = [
-  { name: "Điều khoản - Điều kiện", link: "#" },
-  { name: "Chính sách đổi trả", link: "#" },
-  { name: "Chính sách hỗ trợ", link: "#" },
-  { name: "Chính sách bảo mật", link: "#" },
-];
+import { FaInstagram, FaFacebook, FaTwitter } from "react-icons/fa6";
 
 const copyright = [
   {
     name: "Cao Tiến Hải",
     linkfb: "https://www.facebook.com/hai.tan.288",
-    icon: <Facebook />,
+    icon: <FaFacebook />,
     phone: "0973481940",
   },
   {
     name: "Đặng Quân Bảo",
     linkfb: "https://www.facebook.com/bao.ang.361413",
-    icon: <Facebook />,
+    icon: <FaFacebook />,
     phone: "0974659677",
   },
 ];
@@ -59,15 +38,15 @@ const Footer = () => {
               <p className="pb-2">Theo dõi chúng tôi tại</p>
               <div className="flex gap-3 items-center">
                 <Link href="">
-                  <Facebook />
+                  <FaFacebook />
                 </Link>
 
                 <Link href="https://www.instagram.com/tien_hai_2808/">
-                  <Instagram />
+                  <FaInstagram />
                 </Link>
 
                 <Link href="">
-                  <Twitter />
+                  <FaTwitter />
                 </Link>
               </div>
             </div>

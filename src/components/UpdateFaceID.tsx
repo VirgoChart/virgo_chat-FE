@@ -18,7 +18,6 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
   const [capturedDescriptor, setCapturedDescriptor] = useState<number[]>([]);
   const [isCounting, setIsCounting] = useState(false);
 
-  // 🟢 Load Face API models
   useEffect(() => {
     const loadModels = async () => {
       await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
@@ -30,7 +29,6 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
     loadModels();
   }, []);
 
-  // 🟢 Start video stream
   const startVideo = useCallback(() => {
     if (videoRef.current) {
       navigator.mediaDevices
@@ -42,7 +40,6 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
     }
   }, []);
 
-  // 🔴 Stop video stream
   const stopVideo = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
@@ -51,7 +48,6 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
     }
   }, []);
 
-  // 🔍 Face detection
   const handleFaceDetection = useCallback(async () => {
     if (!videoRef.current || !modelsLoaded || !visible) return;
 
@@ -68,7 +64,6 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
     }
   }, [modelsLoaded, visible]);
 
-  // 🎬 Start/Stop face detection when modal is opened/closed
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
 
@@ -76,7 +71,6 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
       console.log("📸 Modal opened, starting face detection...");
       startVideo();
 
-      // Chạy nhận diện khuôn mặt mỗi 500ms
       intervalId = setInterval(() => {
         handleFaceDetection();
       }, 1000);
@@ -90,7 +84,6 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
     };
   }, [modelsLoaded, visible, handleFaceDetection]);
 
-  // 📤 Save face descriptor
   const handleSave = async () => {
     if (capturedDescriptor.length > 0) {
       try {

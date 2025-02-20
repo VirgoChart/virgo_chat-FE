@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { LogOut, MessageSquare, Settings, User, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { use, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import axiosRequest from "@/config/axios";
 import { getCookie } from "@/utils/cookies";
@@ -15,13 +15,12 @@ import { FaRegMessage } from "react-icons/fa6";
 import { useAuthStore } from "../store/useAuthStore";
 import NotificationDropdown from "./NotificationDropdown";
 import { Drawer } from "antd";
-import { set } from "react-hook-form";
 import dayjs from "dayjs";
-import { FaUserAstronaut } from "react-icons/fa";
+import { FaUserAstronaut, FaBan } from "react-icons/fa";
+import BlockUserModal from "./ui/BlockUserModal";
 
 const Navbar = () => {
   const { logOut, socket } = useAuthStore();
-
   const router = useRouter();
   const user =
     typeof window !== "undefined" ? localStorage.getItem("authUser") : null;
@@ -34,9 +33,7 @@ const Navbar = () => {
 
   const [users, setUsers] = useState<User[]>([]);
   const [usernameSearch, setUsernameSearch] = useState("");
-  const [fullnameSearch, setFullnameSearch] = useState("");
   const [filteredUsernames, setFilteredUsernames] = useState<any[]>([]);
-  const [filteredFullnames, setFilteredFullnames] = useState<any[]>([]);
   const jwt = getCookie("jwt");
   const [userId, setUserId] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -47,7 +44,7 @@ const Navbar = () => {
     userName?: string;
     fullName?: string;
     createdAt?: string;
-  }>({});
+  }>({ relationshipType: "" });
 
   const [requestText, setRequestText] = useState("Yêu cầu nhắn tin");
 
@@ -58,6 +55,8 @@ const Navbar = () => {
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -174,7 +173,7 @@ const Navbar = () => {
 
   const blockUser = async () => {
     try {
-      setRequestText("Blocked");
+      setRequestText("Block");
       const res = await axiosRequest.post(
         "/relationships/block-user",
         {
@@ -182,8 +181,27 @@ const Navbar = () => {
         },
         { withCredentials: true }
       );
+      toast.success(res.message);
+      setIsBlockModalOpen(false);
+      setIsModalVisible(false);
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const unBlockUser = async () => {
+    try {
+      const res = await axiosRequest.delete("/relationships/unblock-user", {
+        data: { userId: userInfo._id },
+        withCredentials: true,
+      });
 
       toast.success(res.message);
+      setIsBlockModalOpen(false);
+      setIsModalVisible(false);
+      setRequestText("Block");
+      window.location.reload();
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -216,8 +234,8 @@ const Navbar = () => {
             {/* Tìm kiếm */}
             <AutoComplete
               className="w-64"
-              options={filteredUsers.map((user) => ({
-                value: user.userName, // Giá trị khi chọn
+              options={filteredUsers.map((user: User) => ({
+                value: user.userName,
                 key: user._id,
                 label: (
                   <div className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
@@ -378,7 +396,7 @@ const Navbar = () => {
                   src={userInfo?.avatar || ""}
                   size={100}
                   // alt="Avatar"
-                  className="border border-gray-400 m-0"  
+                  className="border border-gray-400 m-0"
                 />
               </div>
               <h2 className="text-xl font-semibold text-gray-800">
@@ -387,11 +405,26 @@ const Navbar = () => {
 
               <div className="flex gap-4 mt-4">
                 <button
-                  onClick={blockUser}
-                  className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
+                  onClick={() => {
+                    setIsBlockModalOpen(true);
+                    {
+                      userInfo.relationshipType === "block"
+                        ? setRequestText("unBlock")
+                        : setRequestText("Block");
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-2 ${
+                    userInfo.relationshipType === "block"
+                      ? "bg-gray-500 hover:bg-gray-600"
+                      : "bg-red-500 hover:bg-red-600"
+                  } text-white font-medium rounded-lg px-4 py-2 transition-all`}
                 >
                   <GoBlocked size={16} />
-                  <span>Block</span>
+                  <span>
+                    {userInfo.relationshipType === "block"
+                      ? "Bỏ Block"
+                      : "Block"}
+                  </span>
                 </button>
 
                 {userInfo.relationshipType === "friend" ? (
@@ -402,22 +435,30 @@ const Navbar = () => {
                     <FaUserAstronaut size={16} />
                     <span>Bạn bè</span>
                   </button>
+                ) : userInfo.relationshipType === "block" ? (
+                  <button
+                    className="flex items-center justify-center gap-2 bg-gray-500 text-white font-medium rounded-lg px-4 py-2 cursor-not-allowed opacity-60"
+                    disabled
+                  >
+                    <FaBan size={16} />
+                    <span>Blocked</span>
+                  </button>
                 ) : (
                   <button
                     onClick={sendMessageRequest}
-                    className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
+                    className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg px-4 py-2 transition-all"
                   >
                     <FaRegMessage size={16} />
-                    <span>{requestText}</span>
+                    <span>Gửi yêu cầu nhắn tin</span>
                   </button>
                 )}
-
+                {/* 
                 {requestText === "Đang chờ xác nhận ..." && (
                   <button className="flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg px-4 py-2 transition-all">
                     <GoBlocked size={16} />
                     <span>Hủy yêu cầu</span>
                   </button>
-                )}
+                )} */}
               </div>
 
               <div className="mt-4 w-full border-t pt-4 flex flex-col gap-2">
@@ -438,6 +479,15 @@ const Navbar = () => {
           </div>
         )}
       </Modal>
+
+      <BlockUserModal
+        open={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        onConfirm={() =>
+          requestText === "unBlock" ? unBlockUser() : blockUser()
+        }
+        requestText={requestText}
+      />
     </header>
   );
 };
