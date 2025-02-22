@@ -20,6 +20,9 @@ import {
   IoIosInformationCircleOutline,
   IoMdNotificationsOutline,
 } from "react-icons/io";
+import IncomingCall from "./IncomingCall";
+import { createCall, updateParticipantCall } from "@/services/callServices";
+import { useRouter } from "next/navigation";
 
 interface Message {
   file: any;
@@ -46,19 +49,23 @@ interface Room {
 }
 
 const Sidebar = () => {
+  const authUser = JSON.parse(window.localStorage.getItem("authUser") || "{}");
   const [rooms, setRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [roomId, setRoomId] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [currrentUser, setCurrentUser] = useState<any>(null);
+  const [currrentUser, setCurrentUser] = useState<any>(authUser);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [blockedUsers, setBlockedUsers] = useState<any>([]);
   const jwt = getCookie("jwt");
+  const [incomingCall, setIncomingCall] = useState<any>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  let isCaller = incomingCall?.caller._id === currrentUser._id;
 
   useEffect(() => {
-    // Khi messages thay đổi, cuộn xuống tin nhắn mới nhất
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -114,6 +121,31 @@ const Sidebar = () => {
           prevMessages.filter((msg) => msg._id !== messageId)
         );
       });
+
+      socket.on("updatedCall", (updatedCall) => {
+        console.log("📞 Nhận sự kiện updatedCall:", updatedCall);
+
+        isCaller = updatedCall?.caller._id === currrentUser._id;
+
+        if (!updatedCall) {
+          console.error("❌ Không nhận được dữ liệu updatedCall");
+          return;
+        }
+
+        if (updatedCall.status === "calling") {
+          toast.success("📞 Cuộc gọi được kết nối, chuyển trang...");
+          router.push(
+            `/call?callId=${updatedCall._id}&userId=${updatedCall.caller._id}${updatedCall.room ? `&roomId=${updatedCall.room._id}` : ""}&isCaller=${isCaller}`
+          );
+          setIncomingCall(null);
+        }
+      });
+
+      socket.on("newCall", (call: any) => {
+        console.log("📞 Cuộc gọi đến:", call);
+
+        setIncomingCall(call);
+      });
     }
 
     return () => {
@@ -121,6 +153,8 @@ const Sidebar = () => {
         socket.off("newMessage");
         socket.off("updatedMessage");
         socket.off("deletedMessage");
+        socket.off("newCall");
+        socket.off("updatedCall");
       }
     };
   }, [socket]);
@@ -248,6 +282,54 @@ const Sidebar = () => {
     return <p>Lỗi hiển thị tin nhắn</p>;
   };
 
+  const acceptCall = async () => {
+    if (!socket.id) {
+      console.error("❌ Socket chưa kết nối");
+      return;
+    }
+
+    const res = await updateParticipantCall(
+      incomingCall._id,
+      "connection",
+      jwt
+    );
+
+    console.log("📩 Phản hồi từ API:", res);
+  };
+
+  const rejectCall = async () => {
+    try {
+      setIncomingCall(null);
+      await updateParticipantCall(incomingCall._id, "missed", jwt);
+      socket.on("updatedCall", () => toast.error("Cuộc gọi đã kết thúc"));
+    } catch (error) {
+      console.error("❌ Lỗi từ chối cuộc gọi:", error);
+    } finally {
+      setIncomingCall(null);
+    }
+  };
+
+  const cancelCall = async () => {
+    try {
+      setIncomingCall(null);
+      await updateParticipantCall(incomingCall._id, "missed", jwt);
+      socket.on("updatedCall", () => toast.error("Cuộc gọi kết thúc"));
+    } catch (error) {
+      console.error("❌ Lỗi từ chối cuộc gọi:", error);
+    } finally {
+      setIncomingCall(null);
+    }
+  };
+
+  const handleStartCall = async () => {
+    try {
+      const res = await createCall(roomId, jwt);
+      toast.success("📞Đang gọi...");
+    } catch (error) {
+      toast.error("Lỗi khi tạo cuộc gọi", error);
+    }
+  };
+
   return (
     <div className="flex h-full p-10">
       <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10">
@@ -355,6 +437,7 @@ const Sidebar = () => {
                 <FaCamera
                   size={26}
                   className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                  onClick={handleStartCall}
                 />{" "}
                 <FaInfo
                   size={26}
@@ -555,6 +638,16 @@ const Sidebar = () => {
             </button>
           </div>
         </div>
+      )}
+
+      {incomingCall && (
+        <IncomingCall
+          call={incomingCall}
+          onAccept={acceptCall}
+          onReject={cancelCall}
+          isCaller={isCaller}
+          onCancel={rejectCall}
+        />
       )}
     </div>
   );
