@@ -1,4 +1,4 @@
-import VideoCall from "@/components/VideoCall";
+import VideoCall from "@/app/(main)/chat/VideoCall";
 import IncomingCall from "../chat/IncomingCall";
 
 const CallPage = ({ params }: { params: { roomId: string } }) => {

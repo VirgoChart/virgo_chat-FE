@@ -17,7 +17,7 @@ import NotificationDropdown from "./NotificationDropdown";
 import { Drawer } from "antd";
 import dayjs from "dayjs";
 import { FaUserAstronaut, FaBan } from "react-icons/fa";
-import BlockUserModal from "./ui/BlockUserModal";
+import BlockUserModal from "../app/(main)/blocked-user/BlockUserModal";
 
 const Navbar = () => {
   const { logOut, socket } = useAuthStore();
