@@ -12,6 +12,7 @@ import axiosRequest from "@/config/axios";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { FcGoogle } from "react-icons/fc";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -285,7 +286,7 @@ export default function RegisterForm() {
             onClick={gg}
             className="px-4 cursor-pointer hover:opacity-75 py-2 w-full rounded-lg bg-white border-2 border-[#8361B7] flex items-center justify-center gap-4"
           >
-            <FaGoogle />
+            <FcGoogle />
             <span>Đăng nhập bằng google</span>
           </div>
 

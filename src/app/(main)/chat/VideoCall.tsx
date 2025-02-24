@@ -15,10 +15,8 @@ const VideoCall: React.FC = () => {
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [peer, setPeer] = useState<any>(null);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
-  const [peerID, setPeerID] = useState<string | null>(null); // Thêm peerID
 
   const jwt = getCookie("jwt");
-
   const { socket, connectSocket } = useAuthStore();
   const searchParams = useSearchParams();
   const callId = searchParams.get("callId");
@@ -33,7 +31,6 @@ const VideoCall: React.FC = () => {
 
   useEffect(() => {
     const handleUpdatedCall = (updatedCall: any) => {
-      console.log("📞 Trạng thái cuộc gọi:", updatedCall);
       if (updatedCall.status === "missed") {
         router.push("/chat");
       }
@@ -48,17 +45,15 @@ const VideoCall: React.FC = () => {
   useEffect(() => {
     const getDevices = async () => {
       try {
-        console.log("🔍 Đang lấy danh sách thiết bị...");
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(
           (device) => device.kind === "videoinput"
         );
-
         if (videoDevices.length > 0) {
           setSelectedDeviceId(videoDevices[0].deviceId);
         }
       } catch (error) {
-        console.error("❌ Lỗi khi lấy danh sách thiết bị:", error);
+        console.error("Lỗi lấy danh sách thiết bị:", error);
       }
     };
 
@@ -68,7 +63,6 @@ const VideoCall: React.FC = () => {
   useEffect(() => {
     const startCall = async () => {
       try {
-        console.log("🎥 Yêu cầu quyền truy cập camera/mic...");
         const mediaStream = await navigator.mediaDevices.getUserMedia({
           video: selectedDeviceId
             ? { deviceId: { exact: selectedDeviceId } }
@@ -80,24 +74,19 @@ const VideoCall: React.FC = () => {
         if (myVideo.current) myVideo.current.srcObject = mediaStream;
 
         if (isCaller) {
-          console.log("📡 Người gọi tạo kết nối WebRTC...");
           const newPeer = createPeer(mediaStream, true);
           setPeer(newPeer);
-          setPeerID(socket?.id); // Lưu lại peerID
 
           newPeer.on("signal", (signal: any) => {
-            console.log("📡 Gửi tín hiệu WebRTC...", signal);
-            socket?.emit("callUser", { roomId, signal, peerID: socket.id });
+            socket?.emit("callUser", { roomId, signal });
           });
 
           newPeer.on("stream", (stream: MediaStream) => {
-            console.log("📡 Nhận stream từ người nhận...");
             setRemoteStream(stream);
             if (userVideo.current) userVideo.current.srcObject = stream;
           });
         }
       } catch (error) {
-        console.error("❌ Lỗi truy cập camera/mic:", error);
         toast.error("Không thể truy cập camera/micro: " + error.message);
       }
     };
@@ -106,15 +95,35 @@ const VideoCall: React.FC = () => {
       startCall();
     }
 
-    socket?.on("callAccepted", ({ signal, peerID: remotePeerID }: any) => {
-      console.log("📡 Cuộc gọi được chấp nhận từ:", remotePeerID);
-      if (peer && remotePeerID !== peerID) {
-        peer.signal(signal);
+    // 🎯 Người nhận xử lý cuộc gọi đến
+    // socket?.on("callUser", ({ signal }: any) => {
+    //   console.log("📞 Nhận tín hiệu cuộc gọi từ người gọi...");
+
+    //   const newPeer = createPeer(localStream, false);
+    //   setPeer(newPeer);
+
+    //   newPeer.signal(signal); // Nhận tín hiệu từ người gọi
+
+    //   newPeer.on("signal", (returnSignal: any) => {
+    //     socket?.emit("callAccepted", { roomId, signal: returnSignal });
+    //   });
+
+    //   newPeer.on("stream", (stream: MediaStream) => {
+    //     setRemoteStream(stream);
+    //     if (userVideo.current) userVideo.current.srcObject = stream;
+    //   });
+    // });
+
+    // 🎯 Xử lý khi cuộc gọi được chấp nhận
+    socket?.on("callAccepted", ({ signal }: any) => {
+      console.log("✅ Cuộc gọi được chấp nhận!");
+
+      if (peer) {
+        peer.signal(signal); // Kết nối tín hiệu giữa hai bên
       }
     });
 
     return () => {
-      console.log("🔴 Giải phóng tài nguyên cuộc gọi...");
       localStream?.getTracks().forEach((track) => track.stop());
       remoteStream?.getTracks().forEach((track) => track.stop());
       peer?.destroy();
@@ -122,7 +131,6 @@ const VideoCall: React.FC = () => {
   }, [socket, isCaller, selectedDeviceId]);
 
   const handleEndCall = async () => {
-    console.log("📞 Kết thúc cuộc gọi...");
     if (callId) {
       await updateParticipantCall(callId, "missed", jwt);
       toast.success("Cuộc gọi đã kết thúc");

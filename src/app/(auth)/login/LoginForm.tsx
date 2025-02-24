@@ -13,6 +13,7 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { TbFaceId } from "react-icons/tb";
 import FaceID from "@/components/FaceID";
 import Image from "next/image";
+import { FcGoogle } from "react-icons/fc";
 import { Checkbox } from "antd";
 
 const LoginPage = () => {
@@ -199,7 +200,7 @@ const LoginPage = () => {
                 onClick={gg}
                 className="hover:opacity-75 cursor-pointer px-4 py-2 rounded-lg border-2 border-[#8361B7] flex items-center justify-center gap-4"
               >
-                <FaGoogle />
+                <FcGoogle />
                 <span>Đăng nhập bằng google</span>
               </div>
             </div>

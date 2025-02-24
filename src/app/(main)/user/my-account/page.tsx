@@ -284,26 +284,26 @@ const ProfilePage = () => {
           </form>
         </div>
         {isModalOpen && (
-          <div className="modal modal-open bg-dark-300">
-            <div className="modal-box bg-dark-300">
+          <div className="modal modal-open bg-white">
+            <div className="modal-box bg-white">
               <h3 className="font-bold text-lg">Cập nhật mật khẩu</h3>
               <form onSubmit={handleUpdatePassword}>
                 <div className="py-4">
                   <label className="label">
                     <span className="label-text">Mật khẩu cũ</span>
                   </label>
-                  <div className="relative">
+                  <div className="flex items-center gap-6">
                     <input
                       type={showOldPassword ? "text" : "password"}
                       placeholder="Nhập mật khẩu cũ"
-                      className="input input-bordered w-full max-w-xs bg-dark-200"
+                      className="input w-full max-w-xs bg-white-400"
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
                       disabled={isDisable}
                     />
                     <button
                       type="button"
-                      className="absolute right-2 top-2"
+                      className=""
                       onClick={() => setShowOldPassword(!showOldPassword)}
                     >
                       {showOldPassword ? "👁️" : "🙈"}
@@ -314,18 +314,18 @@ const ProfilePage = () => {
                   <label className="label">
                     <span className="label-text">Mật khẩu mới</span>
                   </label>
-                  <div className="relative">
+                  <div className="flex items-center gap-6">
                     <input
                       type={showNewPassword ? "text" : "password"}
                       placeholder="Nhập mật khẩu mới"
-                      className="input input-bordered w-full max-w-xs bg-dark-200"
+                      className="input w-full max-w-xs bg-white-400"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       disabled={isDisable}
                     />
                     <button
                       type="button"
-                      className="absolute right-2 top-2"
+                      className=""
                       onClick={() => setShowNewPassword(!showNewPassword)}
                     >
                       {showNewPassword ? "👁️" : "🙈"}

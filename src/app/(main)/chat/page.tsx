@@ -45,6 +45,7 @@ interface Room {
       profilePic: string;
     };
     text: string;
+    image: string;
   };
 }
 
@@ -395,7 +396,9 @@ const Sidebar = () => {
                     {admin?.user.fullName}
                   </div>
                   <div className="text-gray-400 text-sm text-zinc-400 truncate">
-                    {room?.lastMessage?.text || "Chưa có tin nhắn"}
+                    {room?.lastMessage?.image
+                      ? "Đã gửi một ảnh"
+                      : room?.lastMessage?.text || "Chưa có tin nhắn"}
                   </div>
                 </div>
               </button>
@@ -479,7 +482,7 @@ const Sidebar = () => {
                           type="text"
                           value={editedText}
                           onChange={(e) => setEditedText(e.target.value)}
-                          className="border border-gray-300 rounded p-1 w-full"
+                          className="border border-gray-300 bg-white-400 rounded p-1 w-full"
                         />
                       ) : (
                         renderMessage(message)
@@ -620,7 +623,6 @@ const Sidebar = () => {
               className="mx-auto mb-6"
               width={124}
               height={124}
-              quality={100}
             />
             <h1 className="text-3xl font-bold mb-4">
               Chào mừng đến với VirgoChat

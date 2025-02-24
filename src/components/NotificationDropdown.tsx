@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Badge, Dropdown, List, Spin, Button } from "antd";
+import { Badge, Dropdown, List, Spin, Button, Avatar } from "antd";
 import { BellOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import axiosRequest from "@/config/axios";
@@ -128,7 +128,7 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
   };
 
   const notificationMenu = (
-    <div className="w-80 mt-4 bg-white shadow-lg rounded-lg py-3 px-4 border border-gray-200">
+    <div className="w-96 mt-4 bg-white shadow-lg rounded-lg py-3 px-4 border border-gray-200">
       {loading ? (
         <div className="flex justify-center items-center h-24">
           <Spin />
@@ -138,15 +138,13 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
           dataSource={notifications}
           className="overflow-auto max-h-96"
           renderItem={(item) => (
-            <List.Item className="p-3 border-b border-gray-100 hover:bg-gray-100 transition">
+            <List.Item className="p-3 border-b border-gray-100 hover:bg-gray-100 transition flex items-center">
               <List.Item.Meta
                 avatar={
-                  <Image
+                  <Avatar
                     src={item.sender.avatar}
                     alt="avatar"
-                    width={40}
-                    height={40}
-                    className="rounded-full object-cover"
+                    className="w-10 h-10 border border-gray-500 rounded-full object-cover"
                   />
                 }
                 title={
@@ -174,7 +172,7 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
                   type="default"
                   size="small"
                   danger
-                  className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded transition"
+                  className="bg-red-600 hover:bg-red-700 text-black text-xs px-2 py-1 rounded transition"
                   onClick={() => handleUpdateStatus(item._id, "rejected")}
                   disabled={item.receivers[0].status === "rejected"}
                 >
