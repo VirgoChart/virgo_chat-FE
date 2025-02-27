@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface IncomingCallProps {
   call: any;
@@ -18,89 +19,121 @@ const IncomingCall: React.FC<IncomingCallProps> = ({
   onCancel,
   isCaller,
 }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const myVideo = useRef<HTMLVideoElement>(null);
+  const userVideo = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const { socket } = useAuthStore();
 
   useEffect(() => {
     if (!call) return;
 
-    const startVideoStream = async () => {
+    const setupMedia = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const localStream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        setStream(localStream);
+        if (myVideo.current) myVideo.current.srcObject = localStream;
 
-        // Gửi stream video qua WebRTC (giả định có server signaling)
-        peerConnectionRef.current = new RTCPeerConnection();
-        stream
-          .getTracks()
-          .forEach((track) =>
-            peerConnectionRef.current?.addTrack(track, stream)
+        peerConnectionRef.current = new RTCPeerConnection({
+          iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+        });
+
+        localStream.getTracks().forEach((track) => {
+          peerConnectionRef.current?.addTrack(track, localStream);
+        });
+
+        peerConnectionRef.current.ontrack = (event) => {
+          if (userVideo.current) userVideo.current.srcObject = event.streams[0];
+        };
+
+        peerConnectionRef.current.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit("sendCandidate", {
+              candidate: event.candidate,
+              callId: call.id,
+            });
+          }
+        };
+
+        socket.on("receiveCandidate", ({ candidate }) => {
+          peerConnectionRef.current?.addIceCandidate(
+            new RTCIceCandidate(candidate)
           );
+        });
       } catch (error) {
-        console.error("❌ Lỗi khi mở camera:", error);
+        console.error("❌ Lỗi khi lấy camera:", error);
       }
     };
 
-    if (isCaller) {
-      startVideoStream();
-    }
+    setupMedia();
 
     return () => {
       peerConnectionRef.current?.close();
+      stream?.getTracks().forEach((track) => track.stop());
     };
-  }, [call, isCaller]);
+  }, [call]);
+
+  const handleAcceptCall = async () => {
+    if (socket && call) {
+      socket.emit("callAccepted", { callId: call.id });
+
+      const offer = await peerConnectionRef.current?.createOffer();
+      await peerConnectionRef.current?.setLocalDescription(offer);
+      socket.emit("sendOffer", { offer, callId: call.id });
+
+      socket.on("receiveAnswer", async ({ answer }) => {
+        await peerConnectionRef.current?.setRemoteDescription(
+          new RTCSessionDescription(answer)
+        );
+      });
+    }
+    onAccept();
+  };
+
+  socket.on("receiveOffer", async ({ offer }) => {
+    await peerConnectionRef.current?.setRemoteDescription(
+      new RTCSessionDescription(offer)
+    );
+
+    const answer = await peerConnectionRef.current?.createAnswer();
+    await peerConnectionRef.current?.setLocalDescription(answer);
+    socket.emit("sendAnswer", { answer, callId: call.id });
+  });
 
   if (!call) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-80 text-center">
-        {isCaller ? (
-          <>
-            <h2 className="text-lg font-semibold">Đang gọi...</h2>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-32 h-32 rounded-lg mt-3 bg-black"
-            />
+        <h2 className="text-lg font-semibold">
+          {isCaller ? "Đang gọi..." : "Cuộc gọi đến"}
+        </h2>
+        <div className="flex gap-4 mt-3">
+          <video
+            ref={myVideo}
+            autoPlay
+            playsInline
+            muted
+            className="w-32 h-32 rounded-lg bg-black"
+          />
+        </div>
+        <div className="flex gap-4 mt-4">
+          {isCaller ? (
             <button
-              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition mt-4"
-              onClick={() => {
-                onCancel();
-                (videoRef.current?.srcObject as MediaStream)
-                  ?.getTracks()
-                  .forEach((track) => {
-                    track.stop();
-                  });
-                call = null;
-              }}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+              onClick={onCancel}
             >
               Hủy cuộc gọi
             </button>
-          </>
-        ) : (
-          <>
-            <h2 className="text-lg font-semibold">Cuộc gọi đến</h2>
-            <Image
-              src={call.caller?.avatar || "/default-avatar.png"}
-              alt={call.caller?.fullName}
-              width={64}
-              height={64}
-              className="w-16 h-16 rounded-full"
-            />
-            <p className="text-lg font-medium">{call.caller?.fullName}</p>
-            <div className="flex gap-4 mt-4">
+          ) : (
+            <>
               <button
                 className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
-                onClick={onAccept}
+                onClick={handleAcceptCall}
               >
                 Trả lời
               </button>
@@ -110,9 +143,9 @@ const IncomingCall: React.FC<IncomingCallProps> = ({
               >
                 Từ chối
               </button>
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

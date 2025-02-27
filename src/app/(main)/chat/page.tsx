@@ -23,6 +23,7 @@ import {
 import IncomingCall from "./IncomingCall";
 import { createCall, updateParticipantCall } from "@/services/callServices";
 import { useRouter } from "next/navigation";
+import { cn } from "@/config/utils";
 
 interface Message {
   file: any;
@@ -273,7 +274,7 @@ const Sidebar = () => {
         <Image
           src={message.image}
           alt="Image message"
-          className="object-contain"
+          className="object-contai w-full rounded-lg"
           width={200}
           height={200}
         />
@@ -334,8 +335,8 @@ const Sidebar = () => {
   return (
     <div className="flex h-full p-10">
       <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10">
-        <div className="border-b border-base-300 w-full p-5">
-          <div className="flex items-center gap-2 justify-between">
+        <div className="border-b border-gray-300 w-full p-5 lg:block hidden">
+          <div className="items-center gap-2 justify-between lg:flex hidden">
             <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
               <Users className="size-6" />
               <span className="font-medium hidden lg:block">Bạn bè</span>
@@ -347,7 +348,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <div className="overflow-y-auto w-full py-3">
+        <div className="overflow-y-auto w-full py-0 border-b border-b-dark-400">
           {rooms?.map((room: Room) => {
             const admin = room.members.find(
               (user: any) => user.user._id !== currrentUser._id
@@ -358,7 +359,7 @@ const Sidebar = () => {
                 key={room._id}
                 onClick={() => getRoomById(room._id, admin)}
                 className={`w-full p-3 flex items-center gap-3 transition-colors ${
-                  selectedRoom?._id === room._id ? "bg-green-200" : ""
+                  selectedRoom?._id === room._id ? "bg-[#D7BFF4]" : ""
                 }`}
               >
                 <div className="relative mx-auto lg:mx-0">
@@ -419,7 +420,7 @@ const Sidebar = () => {
             {/* Vung detail user*/}
             <div className="h-auto w-full border-b-2 py-2 px-6 flex justify-between">
               {" "}
-              <div className="flex items-center w-fit p-2 gap-2 rounded-lg cursor-pointer hover:bg-gray-200">
+              <div className="flex items-center w-fit p-1 lg:p-2 gap-2 rounded-lg cursor-pointer hover:bg-gray-200">
                 {" "}
                 <Avatar
                   src={selectedUser?.user.avatar}
@@ -455,17 +456,21 @@ const Sidebar = () => {
                   message.sender.fullName === currrentUser.fullName;
                 const isEditing = editingMessageId === message._id;
 
+                const isImage = message.image !== undefined;
+
                 return (
                   <div
                     key={message._id}
                     className={`relative w-fit p-3 border rounded-md shadow-sm hover:bg-gray-50 group ${
                       isCurrentUser
-                        ? "ml-auto text-right bg-green-200"
+                        ? isImage
+                          ? "ml-auto text-right bg-white"
+                          : "ml-auto text-right bg-[#DBB3DB]"
                         : "mr-auto text-left bg-gray-100"
                     }`}
                     style={{ maxWidth: "70%" }}
                   >
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-start flex-col">
                       <span
                         className={`font-semibold ${isCurrentUser ? "text-blue-500" : "text-gray-700"}`}
                       >
@@ -476,7 +481,12 @@ const Sidebar = () => {
                       </span>
                     </div>
 
-                    <div className="mt-2 text-gray-700">
+                    <div
+                      className={cn(
+                        "mt-2 text-gray-700 content-center",
+                        isImage ? "w-full flex items-center justify-center" : ""
+                      )}
+                    >
                       {isEditing ? (
                         <input
                           type="text"

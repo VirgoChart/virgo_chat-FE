@@ -236,7 +236,7 @@ const ProfilePage = () => {
                   disabled
                   value={authUser?.email}
                   onChange={handleInputChange}
-                  className="px-4 py-2.5 w-full rounded-lg border bg-[#C5B3E2]"
+                  className="px-4 py-2.5 w-full rounded-lg border bg-[#C5B3E2] cursor-not-allowed opacity-80"
                 />
               </div>
             </div>

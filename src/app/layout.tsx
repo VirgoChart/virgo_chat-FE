@@ -4,7 +4,6 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.scss";
 import { ReactNode } from "react";
-import Footer from "@/layouts/Footer";
 
 const kanit = Kanit({
   subsets: ["latin"],
