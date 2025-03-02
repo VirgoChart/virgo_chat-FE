@@ -14,9 +14,10 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
   onClose,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const thugLifeGlasses = useRef<HTMLImageElement | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [capturedDescriptor, setCapturedDescriptor] = useState<number[]>([]);
-  const [isCounting, setIsCounting] = useState(false);
 
   useEffect(() => {
     const loadModels = async () => {
@@ -26,7 +27,15 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
       console.log("✅ Face API models loaded");
       setModelsLoaded(true);
     };
+
+    const loadGlassesImage = () => {
+      const img = new Image();
+      img.src = "/images/thuglife.jpg";
+      img.onload = () => (thugLifeGlasses.current = img);
+    };
+
     loadModels();
+    loadGlassesImage();
   }, []);
 
   const startVideo = useCallback(() => {
@@ -55,11 +64,63 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
       .detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
       .withFaceDescriptors();
+
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (canvas && ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const { width, height } = videoRef.current.getBoundingClientRect();
+      canvas.width = width;
+      canvas.height = height;
+    }
+
     if (detections.length > 0) {
-      setIsCounting(true);
       setCapturedDescriptor(Array.from(detections[0].descriptor));
+
+      if (canvas && ctx) {
+        detections.forEach((det) => {
+          const box = det.detection.box;
+          const landmarks = det.landmarks;
+          const leftEye = landmarks.getLeftEye();
+          console.log(leftEye);
+          const rightEye = landmarks.getRightEye();
+
+          if (leftEye.length > 0 && rightEye.length > 0) {
+            // Lấy trung tâm của mỗi mắt
+            const leftEyeCenter = {
+              x: (leftEye[0]._x + leftEye[leftEye.length - 1]._x) / 2,
+              y: (leftEye[0]._y + leftEye[leftEye.length - 1]._y) / 2,
+            };
+
+            const rightEyeCenter = {
+              x: (rightEye[0]._x + rightEye[rightEye.length - 1]._x) / 2,
+              y: (rightEye[0]._y + rightEye[rightEye.length - 1]._y) / 2,
+            };
+
+            // Tính kích thước kính
+            const eyeWidth = rightEyeCenter.x - leftEyeCenter.x;
+            const eyeHeight = eyeWidth / 3;
+
+            // Xác định vị trí kính (đặt kính vào trung tâm giữa hai mắt)
+            const eyeX = leftEyeCenter.x - 100 - eyeWidth * 0.2;
+            const eyeY =
+              (leftEyeCenter.y + rightEyeCenter.y) / 2 - eyeHeight * 0.5 - 150;
+
+            // Vẽ kính
+            if (thugLifeGlasses.current) {
+              ctx.drawImage(
+                thugLifeGlasses.current,
+                eyeX,
+                eyeY,
+                eyeWidth * 1.5, // Điều chỉnh kích thước kính phù hợp
+                eyeHeight * 2
+              );
+            }
+          }
+        });
+      }
     } else {
-      setIsCounting(false);
       setCapturedDescriptor([]);
     }
   }, [modelsLoaded, visible]);
@@ -111,14 +172,20 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
         visible ? "block" : "hidden"
       }`}
     >
-      <div className="bg-white p-5 rounded-lg shadow-lg w-[500px]">
+      <div className="relative bg-white p-5 rounded-lg shadow-lg w-[500px]">
         <h2 className="text-xl font-bold mb-4">Nhận diện khuôn mặt</h2>
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          className="w-full h-full bg-gray-200 rounded-lg"
-        ></video>
+        <div className="relative w-full h-64 bg-gray-200 rounded-lg">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            className="absolute top-0 left-0 w-full h-full"
+          ></video>
+          <canvas
+            ref={canvasRef}
+            className="absolute top-0 left-0 w-full h-full"
+          />
+        </div>
         <div className="flex justify-between mt-4">
           <button
             className="px-4 py-2 bg-gray-500 text-white rounded-lg"

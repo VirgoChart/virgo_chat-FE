@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import MessageInput from "./MessageInput";
@@ -7,7 +9,19 @@ interface ChatProps {
 }
 
 const Chat = ({ roomId }: ChatProps) => {
-  const [messages, setMessages] = useState([]);
+  interface Message {
+    _id: string;
+    sender: {
+      fullName: string;
+    };
+    text?: string;
+    file?: {
+      fileUrl: string;
+      fileName: string;
+    };
+  }
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const socket = io("http://localhost:2808");
 
   useEffect(() => {
@@ -42,7 +56,7 @@ const Chat = ({ roomId }: ChatProps) => {
       </div>
       <MessageInput
         roomId={roomId}
-        onMessageSent={(newMessage) =>
+        sendMessage={(newMessage: Message) =>
           setMessages((prev) => [...prev, newMessage])
         }
       />
