@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use, useRef } from "react";
-import { CircleUser, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import SidebarSkeleton from "@/components/skeletons/SidebarSkeleton";
 import { getCookie } from "@/utils/cookies";
 import axiosRequest from "@/config/axios";

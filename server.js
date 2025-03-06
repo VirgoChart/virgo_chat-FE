@@ -1,29 +1,45 @@
-import { createServer } from "node:http";
-import next from "next";
 import { Server } from "socket.io";
+import { createServer } from "http";
+import express from "express";
 
-const dev = process.env.NODE_ENV !== "production";
-const hostname = "localhost";
-const port = 3000;
-// when using middleware `hostname` and `port` must be provided below
-const app = next({ dev, hostname, port });
-const handler = app.getRequestHandler();
+const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
 
-app.prepare().then(() => {
-  const httpServer = createServer(handler);
+server.listen(5000, () => {
+  console.log("🚀 Server is running on port 5000");
+});
 
-  const io = new Server(httpServer);
+const callRooms = {};
 
-  io.on("connection", (socket) => {
-    // ...
+io.on("connection", (socket) => {
+  console.log("🔵 User connected:", socket.id);
+
+  socket.on("join-call", (callId) => {
+    socket.join(callId);
+    if (!callRooms[callId]) callRooms[callId] = [];
+    callRooms[callId].push(socket.id);
+    console.log(`📞 User ${socket.id} joined call ${callId}`);
   });
 
-  httpServer
-    .once("error", (err) => {
-      console.error(err);
-      process.exit(1);
-    })
-    .listen(port, () => {
-      console.log(`> Ready on http://${hostname}:${port}`);
-    });
+  socket.on("send-signal", ({ callId, signalData }) => {
+    socket.to(callId).emit("receive-signal", { signalData });
+  });
+
+  socket.on("leave-call", (callId) => {
+    socket.leave(callId);
+    callRooms[callId] = callRooms[callId]?.filter((id) => id !== socket.id);
+    console.log(`❌ User ${socket.id} left call ${callId}`);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.id);
+    for (const callId in callRooms) {
+      callRooms[callId] = callRooms[callId].filter((id) => id !== socket.id);
+    }
+  });
 });

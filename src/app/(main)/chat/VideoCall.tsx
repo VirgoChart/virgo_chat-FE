@@ -1,51 +1,52 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createPeer } from "@/services/rtc";
-import { updateParticipantCall } from "@/services/callServices";
-import { useAuthStore } from "@/store/useAuthStore";
-import { getCookie } from "@/utils/cookies";
+
+import { use, useCallback, useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
+import Peer from "simple-peer";
+import { useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { updateParticipantCall } from "@/services/callServices";
+import { getCookie } from "@/utils/cookies";
 import * as faceapi from "face-api.js";
 import { Select } from "antd";
 
-interface VideoCallProps {
-  peer: any;
-}
+const socket = io("http://localhost:5000");
 
-const filters = [
-  { name: "Kính 1", src: "/images/thugLife.png", value: "k1" },
-  { name: "Kính 2", src: "/images/kinh.png", value: "k2" },
-  { name: "Tai gấu", src: "/images/taigau.png", value: "t1" },
-  { name: "Tai thỏ", src: "/images/taitho.png", value: "t2" },
-  { name: "Râu 1", src: "/images/rau.png", value: "r1" },
-  { name: "Râu 2", src: "/images/rau2.png", value: "r2" },
-];
-
-const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
-  const myVideo = useRef<HTMLVideoElement>(null);
-  const userVideo = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null); // Add canvas for filter rendering
-  const canvasRef2 = useRef<HTMLCanvasElement>(null); // Add canvas for filter rendering
-
+const VideoCall = ({ params }: { params: {} }) => {
+  const [peer, setPeer] = useState<Peer.Instance | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [peer, setPeer] = useState<any>(incomingPeer);
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
-  const [detector, setDetector] = useState<any>(null); // Face detector model
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const searchParams = useSearchParams();
+  const [isSwapped, setIsSwapped] = useState(false);
+  const router = useRouter();
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const thugLifeGlasses = useRef<HTMLImageElement | null>(null);
   const filterImage = useRef<HTMLImageElement | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [detector, setDetector] = useState<any>(null);
+  const [capturedDescriptor, setCapturedDescriptor] = useState<number[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef2 = useRef<HTMLCanvasElement>(null);
+
+  const callId = searchParams.get("callId");
+  const isCaller = searchParams.get("isCaller") === "true";
+
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   const jwt = getCookie("jwt");
-  const { socket, connectSocket } = useAuthStore();
-  const searchParams = useSearchParams();
-  const callId = searchParams.get("callId");
-  const roomId = searchParams.get("roomId");
-  const isCaller = searchParams.get("isCaller") === "true";
-  const [capturedDescriptor, setCapturedDescriptor] = useState<number[]>([]);
 
-  const router = useRouter();
+  const filters = [
+    { name: "Kính 1", src: "/images/thugLife.png", value: "k" },
+    { name: "Kính 2", src: "/images/kinh.png", value: "k" },
+    { name: "Tai gấu", src: "/images/taigau.png", value: "t" },
+    { name: "Tai thỏ", src: "/images/taitho.png", value: "t" },
+    { name: "Râu 1", src: "/images/rau.png", value: "r" },
+    { name: "Râu 2", src: "/images/rau2.png", value: "r" },
+  ];
 
   useEffect(() => {
     const loadModels = async () => {
@@ -58,34 +59,6 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
 
     loadModels();
   }, []);
-
-  useEffect(() => {
-    const img = new Image();
-    img.src = selectedFilter;
-    img.onload = () => {
-      filterImage.current = img;
-    };
-  }, [selectedFilter]);
-
-  useEffect(() => {
-    if (socket === null) {
-      connectSocket();
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleUpdatedCall = (updatedCall: any) => {
-      console.log("📞 Cập nhật trạng thái cuộc gọi:", updatedCall);
-      if (updatedCall.status === "missed") {
-        router.push("/chat");
-      }
-    };
-
-    socket?.on("updatedCall", handleUpdatedCall);
-    return () => {
-      socket?.off("updatedCall", handleUpdatedCall);
-    };
-  }, [socket]);
 
   useEffect(() => {
     const getDevices = async () => {
@@ -106,83 +79,39 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
   }, []);
 
   useEffect(() => {
-    if (!socket || !selectedDeviceId || !detector) return;
+    const img = new Image();
+    img.src = selectedFilter;
+    img.onload = () => {
+      filterImage.current = img;
+    };
+  }, [selectedFilter]);
 
-    const startCall = async () => {
+  useEffect(() => {
+    const getMediaStream = async () => {
       try {
-        console.log("🎥 Bắt đầu lấy stream video...");
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: selectedDeviceId
-              ? { exact: selectedDeviceId }
-              : undefined,
-          },
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
           audio: true,
         });
-
-        setLocalStream(mediaStream);
-        if (myVideo.current) myVideo.current.srcObject = mediaStream;
-        if (userVideo.current) {
-          userVideo.current.srcObject = mediaStream;
-        }
+        setLocalStream(stream);
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        socket.emit("join-call", callId);
       } catch (error) {
-        console.error("❌ Lỗi truy cập camera/micro:", error);
-        toast.error("Không thể truy cập camera/micro: " + error.message);
+        console.error("❌ Không thể truy cập camera/mic:", error);
       }
     };
 
-    startCall();
+    getMediaStream();
+  }, []);
 
-    const handleCallUser = ({ signal }: any) => {
-      if (!localStream) {
-        console.error("❌ localStream chưa sẵn sàng!");
-        return;
-      }
-      console.log("📞 Nhận cuộc gọi với tín hiệu:", signal);
-      const newPeer = createPeer(localStream, false);
-      setPeer(newPeer);
-
-      newPeer.signal(signal);
-      newPeer.on("signal", (returnSignal: any) => {
-        console.log("📡 Phản hồi cuộc gọi:", returnSignal);
-        socket.emit("callAccepted", { roomId, signal: returnSignal });
-      });
-
-      newPeer.on("stream", (stream: MediaStream) => {
-        console.log("📡 Nhận luồng video từ người gọi", stream);
-        if (userVideo.current) {
-          userVideo.current.srcObject = stream;
-          userVideo.current.play();
-        }
-      });
-    };
-
-    socket.on("callUser", handleCallUser);
-
-    const handleCallAccepted = ({ signal }: any) => {
-      console.log("✅ Cuộc gọi được chấp nhận, tín hiệu:", signal);
-      if (peer && !peer.destroyed) {
-        peer.signal(signal);
-      }
-    };
-
-    socket.on("callAccepted", handleCallAccepted);
-
-    return () => {
-      console.log("🛑 Dọn dẹp cuộc gọi...");
-      localStream?.getTracks().forEach((track) => track.stop());
-      peer?.destroy();
-      socket.off("callUser", handleCallUser);
-      socket.off("callAccepted", handleCallAccepted);
-    };
-  }, [socket, isCaller, selectedDeviceId, roomId, detector]);
-
-  // Face detection and filter rendering function
   const handleFaceDetection = useCallback(async () => {
-    if (!myVideo.current || !modelsLoaded) return;
+    if (!localVideoRef.current || !modelsLoaded) return;
 
     const detections = await faceapi
-      .detectAllFaces(myVideo.current, new faceapi.TinyFaceDetectorOptions())
+      .detectAllFaces(
+        localVideoRef.current,
+        new faceapi.TinyFaceDetectorOptions()
+      )
       .withFaceLandmarks()
       .withFaceDescriptors();
 
@@ -196,7 +125,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
       ctx1.clearRect(0, 0, canvas1.width, canvas1.height);
       ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
 
-      const { width, height } = myVideo?.current.getBoundingClientRect();
+      const { width, height } = localVideoRef?.current.getBoundingClientRect();
       canvas1.width = width;
       canvas1.height = height;
       canvas2.width = width;
@@ -229,9 +158,9 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
           const eyeHeight = eyeWidth / 3;
 
           // Xác định vị trí kính (đặt kính vào trung tâm giữa hai mắt)
-          const eyeX = leftEyeCenter.x - 160 - eyeWidth * 0.2;
+          const eyeX = leftEyeCenter.x - 165 - eyeWidth * 0.2;
           const eyeY =
-            (leftEyeCenter.y + rightEyeCenter.y) / 2 - eyeHeight * 0.5 - 100;
+            (leftEyeCenter.y + rightEyeCenter.y) / 2 - eyeHeight * 0.5 - 105;
 
           // Vẽ kính lên canvas1
           if (ctx1 && filterImage.current) {
@@ -262,21 +191,21 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
   }, [modelsLoaded]);
 
   const startVideo = useCallback(() => {
-    if (myVideo.current) {
+    if (localVideoRef.current) {
       navigator.mediaDevices
         .getUserMedia({ video: true })
         .then((stream) => {
-          myVideo.current!.srcObject = stream;
+          localVideoRef.current!.srcObject = stream;
         })
         .catch((err) => console.error("❌ Lỗi truy cập camera:", err));
     }
   }, []);
 
   const stopVideo = useCallback(() => {
-    if (myVideo.current && myVideo.current.srcObject) {
-      const stream = myVideo.current.srcObject as MediaStream;
+    if (localVideoRef.current && localVideoRef.current.srcObject) {
+      const stream = localVideoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach((track) => track.stop());
-      myVideo.current.srcObject = null;
+      localVideoRef.current.srcObject = null;
     }
   }, []);
 
@@ -300,15 +229,80 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
     };
   }, [modelsLoaded, handleFaceDetection, startVideo, stopVideo]);
 
-  const handleEndCall = async () => {
-    console.log("🚪 Kết thúc cuộc gọi...");
+  useEffect(() => {
+    if (!localStream) return;
+
+    const peerInstance = new Peer({
+      initiator: isCaller,
+      trickle: false,
+      stream: localStream,
+      config: {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      },
+    });
+
+    peerInstance.on("signal", (data) => {
+      console.log("📡 Gửi tín hiệu WebRTC:", data);
+      socket.emit("send-signal", { callId: callId, signalData: data });
+    });
+
+    peerInstance.on("stream", (stream) => {
+      setRemoteStream(stream);
+      if (remoteVideoRef.current) remoteVideoRef.current.srcObject = stream;
+    });
+
+    peerInstance.on("error", (err) => console.error("❌ Lỗi Peer:", err));
+
+    peerInstance.on("close", () => {
+      console.log("🔴 Kết thúc cuộc gọi");
+      setPeer(null);
+    });
+
+    socket.on("receive-signal", ({ signalData }) => {
+      console.log("📡 Nhận tín hiệu từ đối phương");
+      peerInstance.signal(signalData);
+    });
+
+    setPeer(peerInstance);
+
+    return () => {
+      peerInstance.destroy();
+      socket.off("receive-signal");
+    };
+  }, [callId, isCaller, localStream]);
+
+  useEffect(() => {
+    socket.on("leave-call", () => {
+      console.log("🔴 Đối phương đã rời cuộc gọi");
+      peer?.destroy();
+      setPeer(null);
+      setRemoteStream(null);
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+      }
+      router.push("/chat");
+    });
+
+    return () => {
+      socket.off("leave-call");
+    };
+  }, [peer, localStream, router]);
+
+  const endCall = async () => {
+    socket.emit("leave-call", callId);
+    peer?.destroy();
+    setPeer(null);
+    setRemoteStream(null);
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop());
+    }
     if (callId) {
       await updateParticipantCall(callId, "missed", jwt);
       toast.success("Cuộc gọi đã kết thúc");
       router.push("/chat");
+    } else {
+      console.error("❌ callId is undefined");
     }
-    localStream?.getTracks().forEach((track) => track.stop());
-    peer?.destroy();
   };
 
   return (
@@ -317,7 +311,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
         {/* Video của bạn */}
         <div className="relative">
           <video
-            ref={myVideo}
+            ref={localVideoRef}
             autoPlay
             muted
             playsInline
@@ -332,7 +326,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
         {/* Video của user */}
         <div className="relative">
           <video
-            ref={userVideo}
+            ref={remoteVideoRef}
             autoPlay
             playsInline
             className="w-96 h-96 rounded-lg border"
@@ -363,7 +357,7 @@ const VideoCall: React.FC<VideoCallProps> = ({ peer: incomingPeer }) => {
       />
       ;
       <button
-        onClick={handleEndCall}
+        onClick={endCall}
         className="bg-red-500 text-white px-4 py-2 rounded"
       >
         Kết thúc
