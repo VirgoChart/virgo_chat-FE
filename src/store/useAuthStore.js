@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { create } from "zustand";
 import { io } from "socket.io-client";
 
-const BU = "http://localhost:2808";
+const BU = "http://localhost:5000";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,

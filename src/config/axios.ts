@@ -19,7 +19,7 @@ const onRefreshed = (token: string) => {
 };
 
 const axiosRequest = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  baseURL: "http://localhost:5000/api",
   paramsSerializer: {
     serialize: (params) => {
       return QueryString.stringify(params, {

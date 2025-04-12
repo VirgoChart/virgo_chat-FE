@@ -24,8 +24,10 @@ import IncomingCall from "./IncomingCall";
 import { createCall, updateParticipantCall } from "@/services/callServices";
 import { useRouter } from "next/navigation";
 import { cn } from "@/config/utils";
+import reactionOptions from "@/constants/reaction";
 
 interface Message {
+  reactions: any;
   file: any;
   _id: string;
   image: string;
@@ -148,6 +150,16 @@ const Sidebar = () => {
 
         setIncomingCall(call);
       });
+
+      socket.on("reactionMessage", (updatedMessage: any) => {
+        setMessages((prevMessages) =>
+          prevMessages.map((msg) =>
+            msg._id === updatedMessage._id
+              ? { ...msg, reactions: updatedMessage.reactions }
+              : msg
+          )
+        );
+      });
     }
 
     return () => {
@@ -157,6 +169,7 @@ const Sidebar = () => {
         socket.off("deletedMessage");
         socket.off("newCall");
         socket.off("updatedCall");
+        socket.off("reactionMessage");
       }
     };
   }, [socket]);
@@ -230,6 +243,7 @@ const Sidebar = () => {
 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<string>("");
+  const [reactionMenuId, setReactionMenuId] = useState<string | null>(null);
 
   const handleUpdate = async (messageId: string) => {
     try {
@@ -267,21 +281,37 @@ const Sidebar = () => {
   if (isLoading) return <SidebarSkeleton />;
 
   const renderMessage = (message: Message) => {
-    if (message.text) {
-      return <p>{message.text}</p>;
-    } else if (message.image) {
-      return (
-        <Image
-          src={message.image}
-          alt="Image message"
-          className="object-contai w-full rounded-lg"
-          width={200}
-          height={200}
-        />
-      );
-    }
+    return (
+      <div className="relative">
+        {message.text ? (
+          <p>{message.text}</p>
+        ) : message.image ? (
+          <Image
+            src={message.image}
+            alt="Image message"
+            className="object-contain w-full rounded-lg"
+            width={200}
+            height={200}
+          />
+        ) : (
+          <p>Lỗi hiển thị tin nhắn</p>
+        )}
 
-    return <p>Lỗi hiển thị tin nhắn</p>;
+        {/* Hiển thị reaction nếu có */}
+        {message.reactions?.length > 0 && (
+          <div className="flex items-center gap-1 mt-1">
+            {message.reactions.map((reaction: any, index: number) => {
+              const reactionData = reactionOptions.find(
+                (r) => r.type === reaction.reactionType
+              );
+              return reactionData ? (
+                <div key={index}>{reactionData.icon}</div>
+              ) : null;
+            })}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const acceptCall = async () => {
@@ -329,6 +359,24 @@ const Sidebar = () => {
       toast.success("📞Đang gọi...");
     } catch (error) {
       toast.error("Lỗi khi tạo cuộc gọi", error);
+    }
+  };
+
+  const handleReaction = async (messageId: string, reactionType: string) => {
+    try {
+      const res = await axiosRequest.put(
+        `messages/update/${messageId}/reaction`,
+        { reactionType },
+        {
+          headers: { Authorization: `Bearer ${jwt}` },
+          withCredentials: true,
+        }
+      );
+      console.log(res);
+    } catch (error) {
+      console.error("Lỗi khi thêm reaction", error);
+    } finally {
+      setReactionMenuId(null);
     }
   };
 
@@ -480,6 +528,45 @@ const Sidebar = () => {
                         {new Date(message.createdAt).toLocaleString()}
                       </span>
                     </div>
+
+                    <div className="absolute top-1/2 -translate-y-1/2 right-full hidden group-hover:flex">
+                      <button
+                        onClick={() => setReactionMenuId(message._id)}
+                        className="bg-gray-200 p-1 rounded-full hover:bg-gray-300"
+                      >
+                        😊
+                      </button>
+                    </div>
+
+                    {reactionMenuId === message._id && (
+                      <div className="absolute bottom-full mb-2 flex gap-2 bg-white p-2 rounded-lg shadow-md border">
+                        {reactionOptions.map((reaction) => (
+                          <button
+                            key={reaction.type}
+                            onClick={() => {
+                              handleReaction(message._id, reaction.type);
+                              setReactionMenuId(null);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded"
+                          >
+                            {reaction.icon}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {message.reaction && (
+                      <div className="mt-1 flex items-center gap-1">
+                        {
+                          reactionOptions.find(
+                            (r) => r.type === message.reaction
+                          )?.icon
+                        }
+                        <span className="text-sm text-gray-500">
+                          {message.reaction}
+                        </span>
+                      </div>
+                    )}
 
                     <div
                       className={cn(
