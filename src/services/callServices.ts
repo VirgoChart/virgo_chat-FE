@@ -3,7 +3,7 @@ import axiosRequest from "@/config/axios";
 // Tạo cuộc gọi
 export const createCall = async (roomId: string, token: string) => {
   const response = await axiosRequest.post(
-    `/calls/create`,
+    `/calls`,
     { roomId },
     {
       withCredentials: true,
@@ -22,7 +22,7 @@ export const updateParticipantCall = async (
   token: string
 ) => {
   const response = await axiosRequest.put(
-    `/calls/update/participant/${callId}`,
+    `/calls/${callId}/participant`,
     { status },
     {
       withCredentials: true,

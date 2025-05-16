@@ -10,7 +10,7 @@ const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
   {
     id: 2,
-    content: "Hỏi cí loz lượn",
+    content: "Hello baby! How are you?",
     isSent: true,
   },
 ];

@@ -55,31 +55,33 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col flex-0">
-      {/* Hiển thị ảnh xem trước nếu là file ảnh */}
+    <form onSubmit={handleSubmit} className="flex flex-col flex-0 p-3 bg-white">
+      {/* Preview ảnh đính kèm */}
       {fileBase64 && fileType?.startsWith("image/") && (
-        <div className="relative mb-2 w-24 h-24">
+        <div className="relative mb-3 w-24 h-24">
           <Image
             src={fileBase64}
-            alt="image-review"
-            className="w-full h-full object-cover rounded-lg border"
-            width={10}
-            height={10}
+            alt="image-preview"
+            className="w-full h-full object-cover rounded-lg border shadow-sm"
+            width={96}
+            height={96}
           />
           <button
             type="button"
             onClick={handleRemoveFile}
-            className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
+            className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition"
           >
-            <XCircle size={16} />
+            <XCircle size={18} />
           </button>
         </div>
       )}
 
-      <div className="flex items-center gap-2">
+      {/* Thanh nhập và nút gửi */}
+      <div className="flex items-end gap-2">
+        {/* Icon đính kèm file */}
         <label
           htmlFor="file-input"
-          className="cursor-pointer p-2 rounded-full hover:bg-gray-200 transition"
+          className="cursor-pointer w-10 h-10 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full transition"
         >
           <Paperclip size={20} className="text-gray-600" />
           <input
@@ -91,20 +93,22 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
           />
         </label>
 
+        {/* Ô nhập tin nhắn */}
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Nhập tin nhắn"
-          className="flex-1 bg-white resize-none p-3 rounded-lg border focus:ring focus:ring-blue-300 focus:outline-none"
+          placeholder="Nhập tin nhắn..."
           rows={1}
+          className="flex-1 bg-white resize-none px-4 py-2 rounded-2xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm"
         />
 
+        {/* Nút gửi */}
         <button
           type="submit"
           disabled={isSending}
-          className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition disabled:bg-gray-400"
+          className="w-10 h-10 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 transition disabled:bg-gray-400"
         >
-          <Send size={20} />
+          <Send size={18} />
         </button>
       </div>
     </form>

@@ -18,6 +18,7 @@ import { Drawer } from "antd";
 import dayjs from "dayjs";
 import { FaUserAstronaut, FaBan } from "react-icons/fa";
 import BlockUserModal from "../app/(main)/blocked-user/BlockUserModal";
+import { usePathname } from "next/navigation";
 
 const Navbar = () => {
   const { logOut, socket } = useAuthStore();
@@ -57,6 +58,9 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
 
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (path: string) => pathname === path;
 
   const fetchNotifications = async () => {
     setLoading(true);
@@ -101,6 +105,40 @@ const Navbar = () => {
     showModalInfoUser(userId);
   };
 
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+
+  // Debounce the search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (debouncedSearchTerm.trim() === "") {
+      setFilteredUsers([]);
+      return;
+    }
+
+    const fetchUsers = async (keyword: string) => {
+      try {
+        const res = await axiosRequest.get("/users", {
+          params: { q: keyword, limit: 10 },
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+          withCredentials: true,
+        });
+        setFilteredUsers(res.data);
+      } catch (error) {
+        console.error("Lỗi tìm kiếm người dùng:", error);
+      }
+    };
+
+    fetchUsers(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
+
   const getAllUsers = useCallback(async () => {
     try {
       const res = await axiosRequest.get("/users", {
@@ -110,29 +148,34 @@ const Navbar = () => {
         withCredentials: true,
       });
       setUsers(res);
+      console.log("user", res);
     } catch (error: any) {
       toast.error(error || "Failed to fetch users");
     }
   }, [jwt]);
+
   useEffect(() => {
     getAllUsers();
   }, [getAllUsers]);
 
-  useEffect(() => {
-    if (searchTerm) {
-      const lowerCaseTerm = searchTerm.toLowerCase();
+  // useEffect(() => {
+  //   if (searchTerm) {
+  //     const lowerCaseTerm = searchTerm.toLowerCase();
 
-      const results = (users || []).filter(
-        (user) =>
-          user?.userName?.toLowerCase().includes(lowerCaseTerm) ||
-          user?.fullName?.toLowerCase().includes(lowerCaseTerm)
-      );
+  //     // Ensure users is always an array before applying .filter
+  //     const results = Array.isArray(users)
+  //       ? users.filter(
+  //           (user) =>
+  //             user?.userName?.toLowerCase().includes(lowerCaseTerm) ||
+  //             user?.fullName?.toLowerCase().includes(lowerCaseTerm)
+  //         )
+  //       : []; // Default to empty array if users is not an array
 
-      setFilteredUsers(results);
-    } else {
-      setFilteredUsers([]);
-    }
-  }, [searchTerm, users]);
+  //     setFilteredUsers(results);
+  //   } else {
+  //     setFilteredUsers([]); // Clear results if there's no search term
+  //   }
+  // }, [searchTerm, users]);
 
   const handleLogout = () => {
     router.replace("/login");
@@ -175,7 +218,7 @@ const Navbar = () => {
     try {
       setRequestText("Block");
       const res = await axiosRequest.post(
-        "/relationships/block-user",
+        "/relationships/block",
         {
           userId: userInfo._id,
         },
@@ -212,7 +255,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 h-16">
         <div className="flex items-center justify-between h-full">
           {/* Logo */}
-          <div className="flex items-center gap-8">
+          <div className="items-center gap-8 lg:block hidden">
             <Link
               href="/"
               className="flex items-center gap-2.5 hover:opacity-80 transition-all"
@@ -229,76 +272,109 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Menu Desktop */}
-          <div className="hidden md:flex items-center gap-4">
-            {/* Tìm kiếm */}
-            <AutoComplete
-              className="w-64"
-              options={filteredUsers.map((user: User) => ({
-                value: user.userName,
-                key: user._id,
-                label: (
-                  <div className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-lg">
-                    <Image
-                      src={user.avatar || "/default-avatar.png"}
-                      alt={user.userName}
-                      className="w-8 h-8 rounded-full"
-                      width={32}
-                      height={32}
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{user.userName}</span>
-                      <span className="text-xs text-gray-500">
-                        {user.fullName}
-                      </span>
-                    </div>
+          <AutoComplete
+            className="w-96"
+            options={filteredUsers.map((user: User) => ({
+              value: user.userName,
+              key: user._id,
+              label: (
+                <div className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                  <Image
+                    src={user.avatar || "/default-avatar.png"}
+                    alt={user.userName}
+                    className="w-8 h-8 rounded-full object-cover"
+                    width={32}
+                    height={32}
+                  />
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-800">
+                      {user.userName}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {user.fullName}
+                    </span>
                   </div>
-                ),
-              }))}
-              value={searchTerm}
-              onChange={setSearchTerm}
-              onSelect={handleSelect}
-            >
-              <Input.Search placeholder="Tìm kiếm người dùng" allowClear />
-            </AutoComplete>
+                </div>
+              ),
+            }))}
+            value={searchTerm}
+            onChange={setSearchTerm}
+            onSelect={handleSelect}
+          >
+            <Input.Search
+              placeholder="Tìm kiếm người dùng"
+              allowClear
+              className="rounded-lg"
+            />
+          </AutoComplete>
 
-            <Link href={"/chat"} className="btn btn-sm gap-2 transition-colors">
+          {/* Menu Desktop */}
+          <div className="hidden md:flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border">
+            <Link
+              href="/chat"
+              className={`flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100 ${
+                isActive("/chat")
+                  ? "text-blue-600 font-semibold"
+                  : "text-gray-700 hover:text-blue-600"
+              }`}
+            >
               <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">Chat</span>
+              <span className="hidden sm:inline text-sm">Chat</span>
             </Link>
 
             <Link
+              href="/settings"
               title="Cài đặt"
-              href={"/settings"}
-              className="btn btn-sm gap-2 transition-colors"
+              className={`flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100 ${
+                isActive("/settings")
+                  ? "text-blue-600 font-semibold"
+                  : "text-gray-700 hover:text-blue-600"
+              }`}
             >
               <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Settings</span>
             </Link>
 
             <Link
+              href="/blocked-user"
               title="Xem danh sách chặn"
-              href={"/blocked-user"}
-              className="btn btn-sm gap-2 transition-colors"
+              className={`flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100 ${
+                isActive("/blocked-user")
+                  ? "text-blue-600 font-semibold"
+                  : "text-gray-700 hover:text-blue-600"
+              }`}
             >
               <GoBlocked className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Blocked</span>
             </Link>
 
             {!user ? (
-              <Link href={"/login"} className="btn btn-sm gap-2">
+              <Link
+                href="/login"
+                className={`flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100 ${
+                  isActive("/login")
+                    ? "text-blue-600 font-semibold"
+                    : "text-gray-700 hover:text-blue-600"
+                }`}
+              >
                 <User className="size-5" />
-                <span className="hidden sm:inline">Đăng nhập</span>
+                <span className="hidden sm:inline text-sm">Đăng nhập</span>
               </Link>
             ) : (
-              <>
-                <Link
-                  title="Trang cá nhân"
-                  href={"/user/my-account"}
-                  className="btn btn-sm gap-2"
-                >
-                  <User className="size-5" />
-                </Link>
-              </>
+              <Link
+                href="/user/my-account"
+                title="Trang cá nhân"
+                className={`flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-100 ${
+                  isActive("/user/my-account")
+                    ? "text-blue-600 font-semibold"
+                    : "text-gray-700 hover:text-blue-600"
+                }`}
+              >
+                <User className="size-5" />
+                <span className="hidden sm:inline text-sm">Profile</span>
+              </Link>
             )}
+
             <NotificationDropdown socket={socket} />
           </div>
 
@@ -319,28 +395,39 @@ const Navbar = () => {
           >
             <div className="flex flex-col gap-4">
               <AutoComplete
-                className="w-full"
-                options={filteredUsernames.map((user) => ({
+                className="w-96"
+                options={filteredUsers.map((user: User) => ({
                   value: user.userName,
                   key: user._id,
                   label: (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                       <Image
-                        src={user.avatar}
+                        src={user.avatar || "/default-avatar.png"}
                         alt={user.userName}
-                        className="w-8 h-8 rounded-full"
+                        className="w-8 h-8 rounded-full object-cover"
                         width={32}
                         height={32}
                       />
-                      <span>{user.userName}</span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-800">
+                          {user.userName}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {user.fullName}
+                        </span>
+                      </div>
                     </div>
                   ),
                 }))}
-                value={usernameSearch}
-                onChange={setUsernameSearch}
+                value={searchTerm}
+                onChange={setSearchTerm}
                 onSelect={handleSelect}
               >
-                <Input.Search placeholder="Tìm kiếm theo username" allowClear />
+                <Input.Search
+                  placeholder="Tìm kiếm người dùng"
+                  allowClear
+                  className="rounded-lg"
+                />
               </AutoComplete>
 
               <Link href={"/chat"} className="btn btn-block">

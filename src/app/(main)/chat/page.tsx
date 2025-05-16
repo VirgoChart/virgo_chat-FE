@@ -25,6 +25,7 @@ import { createCall, updateParticipantCall } from "@/services/callServices";
 import { useRouter } from "next/navigation";
 import { cn } from "@/config/utils";
 import reactionOptions from "@/constants/reaction";
+import { Pencil, Trash2 } from "lucide-react";
 
 interface Message {
   reactions: any;
@@ -79,7 +80,7 @@ const Sidebar = () => {
     if (socket === null) {
       connectSocket();
     }
-  }, []);
+  }, [socket, connectSocket]);
 
   const getRoomById = async (roomId: string, user: any) => {
     setSelectedUser(user);
@@ -95,7 +96,7 @@ const Sidebar = () => {
       setBlockedUsers(response.room.blockedMembers);
       if (response.room) setSelectedRoom(response.room);
     } catch (error: any) {
-      toast.error(error);
+      toast.error("Lỗi lấy dữ liệu phòng phòng", error);
     }
   };
 
@@ -204,14 +205,13 @@ const Sidebar = () => {
       toast.error("Vui lòng nhập tin nhắn hoặc chọn file");
       return;
     }
-
     try {
       const requests = [];
 
       if (text) {
         requests.push(
           axiosRequest.post(
-            "/messages/create",
+            "/messages",
             { roomId, text },
             {
               headers: { Authorization: `Bearer ${jwt}` },
@@ -220,11 +220,10 @@ const Sidebar = () => {
           )
         );
       }
-
       if (fileBase64) {
         requests.push(
           axiosRequest.post(
-            "/messages/create",
+            "/messages",
             { roomId, image: fileBase64 },
             {
               headers: { Authorization: `Bearer ${jwt}` },
@@ -233,7 +232,6 @@ const Sidebar = () => {
           )
         );
       }
-
       await Promise.all(requests);
       getRoomById(roomId, selectedUser);
     } catch (err: any) {
@@ -248,7 +246,7 @@ const Sidebar = () => {
   const handleUpdate = async (messageId: string) => {
     try {
       await axiosRequest.put(
-        `/messages/update/${messageId}`,
+        `/messages/${messageId}`,
         { text: editedText },
         {
           headers: { Authorization: `Bearer ${jwt}` },
@@ -266,7 +264,7 @@ const Sidebar = () => {
 
   const handleDelete = async (messageId: string) => {
     try {
-      const res = await axiosRequest.delete(`/messages/delete/${messageId}`, {
+      const res = await axiosRequest.delete(`/messages/${messageId}`, {
         headers: { Authorization: `Bearer ${jwt}` },
         withCredentials: true,
       });
@@ -365,7 +363,7 @@ const Sidebar = () => {
   const handleReaction = async (messageId: string, reactionType: string) => {
     try {
       const res = await axiosRequest.put(
-        `messages/update/${messageId}/reaction`,
+        `messages/${messageId}/reaction`,
         { reactionType },
         {
           headers: { Authorization: `Bearer ${jwt}` },
@@ -382,8 +380,8 @@ const Sidebar = () => {
 
   return (
     <div className="flex h-full p-10">
-      <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10">
-        <div className="border-b border-gray-300 w-full p-5 lg:block hidden">
+      <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10 rounded-l-xl">
+        <div className="border-b border-gray-300 w-full py-4 px-5 lg:block hidden">
           <div className="items-center gap-2 justify-between lg:flex hidden">
             <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
               <Users className="size-6" />
@@ -466,37 +464,37 @@ const Sidebar = () => {
         <div className="flex flex-1 items-center">
           <div className="flex flex-col h-[550px] w-full mt-10 border">
             {/* Vung detail user*/}
-            <div className="h-auto w-full border-b-2 py-2 px-6 flex justify-between">
-              {" "}
-              <div className="flex items-center w-fit p-1 lg:p-2 gap-2 rounded-lg cursor-pointer hover:bg-gray-200">
-                {" "}
+            <div className="h-auto w-full border-b border-gray-200 py-1 px-6 flex justify-between items-center bg-white shadow-sm">
+              {/* Thông tin người dùng */}
+              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition cursor-pointer">
                 <Avatar
                   src={selectedUser?.user.avatar}
                   icon={<FaRegUser />}
                   size={48}
-                  className="border border-gray-400 m-0"
-                />{" "}
-                <h1 className="text-xl font-bold">
+                  className="border border-gray-300"
+                />
+                <h1 className="text-lg lg:text-xl font-semibold text-gray-800">
                   {selectedUser?.user.fullName}
-                </h1>{" "}
-              </div>{" "}
-              <div className="flex gap-5 items-center">
-                {" "}
-                <FaPhone
-                  size={26}
-                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
-                />{" "}
-                <FaCamera
-                  size={26}
-                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
+                </h1>
+              </div>
+
+              {/* Các nút hành động */}
+              <div className="flex items-center gap-4">
+                <div className="p-2 rounded-full hover:bg-blue-100 transition cursor-pointer">
+                  <FaPhone size={22} className="text-blue-500" />
+                </div>
+                <div
                   onClick={handleStartCall}
-                />{" "}
-                <FaInfo
-                  size={26}
-                  className="text-blue-400 hover:bg-dark-200 rounded-lg"
-                />{" "}
-              </div>{" "}
+                  className="p-2 rounded-full hover:bg-blue-100 transition cursor-pointer"
+                >
+                  <FaCamera size={22} className="text-blue-500" />
+                </div>
+                <div className="p-2 rounded-full hover:bg-blue-100 transition cursor-pointer">
+                  <FaInfo size={22} className="text-blue-500" />
+                </div>
+              </div>
             </div>
+
             {/* Vùng tin nhắn */}
             <div className="overflow-y-auto p-4 space-y-3 h-[400px]">
               {messages.map((message) => {
@@ -509,37 +507,44 @@ const Sidebar = () => {
                 return (
                   <div
                     key={message._id}
-                    className={`relative w-fit p-3 border rounded-md shadow-sm hover:bg-gray-50 group ${
+                    className={cn(
+                      "relative w-fit p-3 border rounded-xl shadow-sm group transition",
                       isCurrentUser
                         ? isImage
                           ? "ml-auto text-right bg-white"
                           : "ml-auto text-right bg-[#DBB3DB]"
                         : "mr-auto text-left bg-gray-100"
-                    }`}
+                    )}
                     style={{ maxWidth: "70%" }}
                   >
-                    <div className="flex items-start flex-col">
+                    {/* Header người gửi + thời gian */}
+                    <div className="flex flex-col items-start gap-0.5">
                       <span
-                        className={`font-semibold ${isCurrentUser ? "text-blue-500" : "text-gray-700"}`}
+                        className={cn(
+                          "text-sm font-semibold",
+                          isCurrentUser ? "text-blue-600" : "text-gray-700"
+                        )}
                       >
                         {message.sender.fullName}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-xs text-gray-500">
                         {new Date(message.createdAt).toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="absolute top-1/2 -translate-y-1/2 right-full hidden group-hover:flex">
+                    {/* Icon Reaction (góc trên phải) */}
+                    <div className="absolute top-2 right-2 hidden group-hover:flex">
                       <button
                         onClick={() => setReactionMenuId(message._id)}
-                        className="bg-gray-200 p-1 rounded-full hover:bg-gray-300"
+                        className="bg-gray-200 hover:bg-gray-300 p-1 rounded-full shadow transition"
                       >
                         😊
                       </button>
                     </div>
 
+                    {/* Menu Emoji Reaction */}
                     {reactionMenuId === message._id && (
-                      <div className="absolute bottom-full mb-2 flex gap-2 bg-white p-2 rounded-lg shadow-md border">
+                      <div className="absolute top-0 right-10 flex gap-1 bg-white p-2 rounded-lg shadow-lg border z-10">
                         {reactionOptions.map((reaction) => (
                           <button
                             key={reaction.type}
@@ -547,7 +552,7 @@ const Sidebar = () => {
                               handleReaction(message._id, reaction.type);
                               setReactionMenuId(null);
                             }}
-                            className="p-1 hover:bg-gray-100 rounded"
+                            className="text-xl hover:scale-110 transition"
                           >
                             {reaction.icon}
                           </button>
@@ -555,23 +560,11 @@ const Sidebar = () => {
                       </div>
                     )}
 
-                    {message.reaction && (
-                      <div className="mt-1 flex items-center gap-1">
-                        {
-                          reactionOptions.find(
-                            (r) => r.type === message.reaction
-                          )?.icon
-                        }
-                        <span className="text-sm text-gray-500">
-                          {message.reaction}
-                        </span>
-                      </div>
-                    )}
-
+                    {/* Nội dung hoặc ảnh */}
                     <div
                       className={cn(
-                        "mt-2 text-gray-700 content-center",
-                        isImage ? "w-full flex items-center justify-center" : ""
+                        "mt-2 text-gray-700",
+                        isImage ? "flex justify-center" : ""
                       )}
                     >
                       {isEditing ? (
@@ -579,27 +572,39 @@ const Sidebar = () => {
                           type="text"
                           value={editedText}
                           onChange={(e) => setEditedText(e.target.value)}
-                          className="border border-gray-300 bg-white-400 rounded p-1 w-full"
+                          className="border border-gray-300 bg-white rounded px-2 py-1 w-full"
                         />
                       ) : (
                         renderMessage(message)
                       )}
                     </div>
 
-                    {/* Hiển thị nút khi hover */}
+                    {/* Reaction đã chọn */}
+                    {message.reaction && (
+                      <div className="mt-2 flex items-center gap-1 text-sm text-gray-600">
+                        {
+                          reactionOptions.find(
+                            (r) => r.type === message.reaction
+                          )?.icon
+                        }
+                        <span>{message.reaction}</span>
+                      </div>
+                    )}
+
+                    {/* Nút Sửa / Xóa */}
                     {isCurrentUser && (
-                      <div className="absolute top-6 right-full hidden group-hover:flex gap-2 p-2">
+                      <div className="absolute top-16 left-2 hidden group-hover:flex items-center gap-2">
                         {isEditing ? (
                           <>
                             <button
                               onClick={() => handleUpdate(message._id)}
-                              className="text-green-600 hover:underline"
+                              className="text-green-600 hover:text-green-800 transition"
                             >
                               Lưu
                             </button>
                             <button
                               onClick={() => setEditingMessageId(null)}
-                              className="text-red-600 hover:underline"
+                              className="text-red-500 hover:text-red-700 transition"
                             >
                               Hủy
                             </button>
@@ -611,15 +616,15 @@ const Sidebar = () => {
                                 setEditingMessageId(message._id);
                                 setEditedText(message.text);
                               }}
-                              className="text-blue-600 hover:underline"
+                              className="text-blue-600 hover:text-blue-800"
                             >
-                              Sửa
+                              <Pencil size={18} />
                             </button>
                             <button
                               onClick={() => handleDelete(message._id)}
-                              className="text-red-600 hover:underline"
+                              className="text-red-500 hover:text-red-700"
                             >
-                              Xóa
+                              <Trash2 size={18} />
                             </button>
                           </>
                         )}
@@ -665,49 +670,50 @@ const Sidebar = () => {
             })()}
           </div>
 
-          <div className="h-[550px] mt-10 border w-96 border-gray-300 flex flex-col">
-            {/* Top section with circles */}
-            <div className="p-4 flex flex-col items-center border-b border-gray-300 gap-2">
+          <div className="h-[550px] mt-10 w-96 border border-gray-300 rounded-r-xl overflow-hidden shadow-sm flex flex-col bg-white">
+            {/* Top: Avatar + Action Circles */}
+            <div className="p-5 flex flex-col items-center border-b border-gray-200 gap-3 bg-gradient-to-b from-gray-100 to-white">
               <Avatar
                 src={selectedUser?.user.avatar}
-                size={70}
-                className="border border-gray-300"
+                size={72}
+                className="border-2 border-violet-200 shadow-sm"
               />
-              <div className="flex gap-2 text-white">
-                <div className="w-12 h-12 rounded-full bg-green-500 flex justify-center items-center cursor-pointer">
-                  <IoMdNotificationsOutline />
+              <div className="flex gap-3">
+                <div className="w-11 h-11 rounded-full bg-green-500 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md">
+                  <IoMdNotificationsOutline size={22} />
                 </div>
-                <div className="w-12 h-12 rounded-full bg-red-300 flex justify-center items-center cursor-pointer">
-                  <FaRegTrashCan />
+                <div className="w-11 h-11 rounded-full bg-red-400 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md">
+                  <FaRegTrashCan size={20} />
                 </div>
-                <div className="w-12 h-12 rounded-full bg-blue-300 flex justify-center items-center cursor-pointer">
-                  <IoIosInformationCircleOutline />
+                <div className="w-11 h-11 rounded-full bg-blue-400 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md">
+                  <IoIosInformationCircleOutline size={22} />
                 </div>
               </div>
             </div>
 
-            {/* Middle section with two equal boxes */}
-            <div className="flex border-b border-blue-500">
-              <div className="w-1/2 h-20 bg-gray-300 border-r border-blue-500"></div>
-              <div className="w-1/2 h-20 bg-gray-300"></div>
-            </div>
+            {/* Middle: 2 Equal Boxes */}
 
-            {/* Bottom section with one large box */}
-            <div className="flex-1 bg-gray-100 overflow-y-auto max-h-[600px] p-2">
-              <div className="grid grid-cols-2 gap-2 place-items-center">
+            {/* Bottom: Ảnh Chat */}
+            <div className="flex-1 bg-gray-50 overflow-y-auto p-4">
+              <div className="grid grid-cols-2 gap-3">
                 {messages.map((message, index) =>
                   message.image ? (
                     <Image
                       key={index}
                       src={message.image}
                       alt={`Room Image ${index + 1}`}
-                      className="w-full h-40 object-cover rounded-lg"
+                      className="w-full h-36 object-cover rounded-lg shadow-sm hover:scale-105 transition border-2 border-gray-200"
                       width={110}
                       height={110}
                     />
                   ) : null
                 )}
               </div>
+              {messages.filter((m) => m.image).length === 0 && (
+                <div className="text-center text-gray-400 mt-4">
+                  Chưa có ảnh nào được gửi
+                </div>
+              )}
             </div>
           </div>
         </div>

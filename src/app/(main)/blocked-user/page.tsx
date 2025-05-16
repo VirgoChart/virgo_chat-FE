@@ -28,18 +28,15 @@ const BlockedUsers = () => {
   useEffect(() => {
     const fetchBlockedUsers = async () => {
       try {
-        const response = await axiosRequest.get(
-          "/relationships/blocked-users",
-          {
-            data: {
-              userid: currentUser.id,
-            },
-            headers: {
-              Authorization: `Bearer ${jwt}`,
-            },
-            withCredentials: true,
-          }
-        );
+        const response = await axiosRequest.get("/relationships/blocked", {
+          data: {
+            userid: currentUser.id,
+          },
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+          withCredentials: true,
+        });
 
         setBlockedUsers(response);
       } catch (err) {
@@ -56,7 +53,7 @@ const BlockedUsers = () => {
     if (!selectedUser) return;
 
     try {
-      await axiosRequest.delete("/relationships/unblock-user", {
+      await axiosRequest.delete("/relationships/unblock", {
         data: { userId: selectedUser.to._id },
         headers: {
           Authorization: `Bearer ${jwt}`,
@@ -82,34 +79,38 @@ const BlockedUsers = () => {
   console.log(blockedUsers);
 
   if (loading) return <p>Đang tải danh sách...</p>;
-  if (error) return <p>{error}</p>;
 
   return (
-    <div className="p-4 bg-white rounded shadow-md mt-40 w-1/2">
-      <h2 className="text-xl font-bold mb-4">Người dùng bị chặn</h2>
+    <div className="max-w-2xl w-full mx-auto mt-40 bg-white rounded-2xl shadow-lg p-6">
+      <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-b pb-3">
+        Người dùng bị chặn
+      </h2>
+
       {blockedUsers?.length === 0 ? (
-        <p>Không có người dùng bị chặn</p>
+        <p className="text-gray-500 text-center">Không có người dùng bị chặn</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-4">
           {blockedUsers?.map((user) => (
             <li
               key={user.from}
-              className="p-2 border rounded flex gap-3 items-center justify-between"
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-xl hover:shadow transition"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Image
                   src={user.to.avatar}
                   alt="avatar"
                   width={40}
                   height={40}
                   quality={100}
-                  className="w-10 h-10 object-cover rounded-full"
+                  className="w-10 h-10 object-cover rounded-full border border-gray-300"
                 />
-                {user.to?.fullName || "Người dùng ẩn danh"}
+                <span className="text-gray-800 font-medium">
+                  {user.to?.fullName || "Người dùng ẩn danh"}
+                </span>
               </div>
               <button
                 onClick={() => showUnblockModal(user)}
-                className="text-red-500 hover:text-red-700 transition flex items-center gap-1"
+                className="text-red-600 hover:text-red-800 flex items-center gap-1 transition font-medium"
               >
                 <AiOutlineUnlock size={20} />
                 Bỏ chặn
@@ -119,7 +120,7 @@ const BlockedUsers = () => {
         </ul>
       )}
 
-      {/* Modal Xác Nhận (Component Riêng) */}
+      {/* Modal Xác Nhận */}
       <ConfirmModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}

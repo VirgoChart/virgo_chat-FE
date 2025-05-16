@@ -75,7 +75,7 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
 
       if (unseenIds.length > 0) {
         await axiosRequest.put(
-          "notifications/update/seen",
+          "notifications/seen",
           {
             notificationIds: unseenIds,
           },
@@ -103,7 +103,7 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
   const handleUpdateStatus = async (notificationId: string, status: string) => {
     try {
       await axiosRequest.put(
-        `/notifications/update/status/${notificationId}`,
+        `/notifications/${notificationId}/status`,
         { status },
         {
           headers: {
