@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/config/utils";
 import reactionOptions from "@/constants/reaction";
 import { Pencil, Trash2 } from "lucide-react";
+import UserDetailModal from "./UserDetailModal";
 
 interface Message {
   reactions: any;
@@ -61,10 +62,12 @@ const Sidebar = () => {
   const [roomId, setRoomId] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [currrentUser, setCurrentUser] = useState<any>(authUser);
+  const [anotherUser, setAnotherUser] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [blockedUsers, setBlockedUsers] = useState<any>([]);
   const jwt = getCookie("jwt");
   const [incomingCall, setIncomingCall] = useState<any>(null);
+  const [isUserDetailModalOpen, setIsUserDetailModalOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -94,11 +97,14 @@ const Sidebar = () => {
       setRoomId(response.room._id);
       setMessages(response.messages);
       setBlockedUsers(response.room.blockedMembers);
+      setAnotherUser(response.room.members[1]);
       if (response.room) setSelectedRoom(response.room);
     } catch (error: any) {
       toast.error("Lỗi lấy dữ liệu phòng phòng", error);
     }
   };
+
+  console.log("anotherUser", anotherUser);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -685,7 +691,10 @@ const Sidebar = () => {
                 <div className="w-11 h-11 rounded-full bg-red-400 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md">
                   <FaRegTrashCan size={20} />
                 </div>
-                <div className="w-11 h-11 rounded-full bg-blue-400 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md">
+                <div
+                  onClick={() => setIsUserDetailModalOpen(true)}
+                  className="w-11 h-11 rounded-full bg-blue-400 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md"
+                >
                   <IoIosInformationCircleOutline size={22} />
                 </div>
               </div>
@@ -754,6 +763,14 @@ const Sidebar = () => {
           onCancel={rejectCall}
         />
       )}
+
+      <UserDetailModal
+        open={isUserDetailModalOpen}
+        onClose={() => setIsUserDetailModalOpen(false)}
+        user={anotherUser.user}
+        joinedAt={anotherUser?.joinedAt}
+        role={anotherUser?.role}
+      />
     </div>
   );
 };
