@@ -384,6 +384,20 @@ const Sidebar = () => {
     }
   };
 
+  const handleDeleteAllMessage = async () => {
+    try {
+      const res = await axiosRequest.delete(`messages/all`, {
+        headers: { Authorization: `Bearer ${jwt}` },
+        withCredentials: true,
+      });
+      console.log(res);
+    } catch (error) {
+      console.error("Lỗi xóa tin nhắn", error);
+    } finally {
+      setReactionMenuId(null);
+    }
+  };
+
   return (
     <div className="flex h-full p-10">
       <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10 rounded-l-xl">
@@ -495,7 +509,10 @@ const Sidebar = () => {
                 >
                   <FaCamera size={22} className="text-blue-500" />
                 </div>
-                <div className="p-2 rounded-full hover:bg-blue-100 transition cursor-pointer">
+                <div
+                  onClick={() => setIsUserDetailModalOpen(true)}
+                  className="p-2 rounded-full hover:bg-blue-100 transition cursor-pointer"
+                >
                   <FaInfo size={22} className="text-blue-500" />
                 </div>
               </div>
@@ -688,7 +705,10 @@ const Sidebar = () => {
                 <div className="w-11 h-11 rounded-full bg-green-500 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md">
                   <IoMdNotificationsOutline size={22} />
                 </div>
-                <div className="w-11 h-11 rounded-full bg-red-400 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md">
+                <div
+                  onClick={handleDeleteAllMessage}
+                  className="w-11 h-11 rounded-full bg-red-400 flex items-center justify-center text-white hover:scale-105 transition cursor-pointer shadow-md"
+                >
                   <FaRegTrashCan size={20} />
                 </div>
                 <div
@@ -767,7 +787,7 @@ const Sidebar = () => {
       <UserDetailModal
         open={isUserDetailModalOpen}
         onClose={() => setIsUserDetailModalOpen(false)}
-        user={anotherUser.user}
+        user={anotherUser?.user}
         joinedAt={anotherUser?.joinedAt}
         role={anotherUser?.role}
       />

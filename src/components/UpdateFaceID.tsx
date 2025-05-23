@@ -181,10 +181,10 @@ const FaceDetectionModal: React.FC<FaceDetectionModalProps> = ({
             muted
             className="absolute top-0 left-0 w-full h-full"
           ></video>
-          <canvas
+          {/* <canvas
             ref={canvasRef}
             className="absolute top-0 left-0 w-full h-full"
-          />
+          /> */}
         </div>
         <div className="flex justify-between mt-4">
           <button
