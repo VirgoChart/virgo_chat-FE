@@ -94,16 +94,23 @@ const Sidebar = () => {
         },
         withCredentials: true,
       });
-      setRoomId(response.room._id);
-      setMessages(response.messages);
-      setBlockedUsers(response.room.blockedMembers);
-      setAnotherUser(response.room.members[1]);
-      if (response.room) setSelectedRoom(response.room);
+
+      const room = response?.room;
+      console.log(room?.members[1]);
+      const messages = response?.messages;
+
+      setRoomId(room?._id || "");
+      setMessages(messages || []);
+      setBlockedUsers(room?.blockedMembers || []);
+      setSelectedRoom(room || null);
+
+      setAnotherUser(room?.members[1]);
     } catch (error: any) {
-      toast.error("Lỗi lấy dữ liệu phòng phòng", error);
+      toast.error("Lỗi lấy dữ liệu phòng");
     }
   };
 
+  console.log("currrentUser", currrentUser);
   console.log("anotherUser", anotherUser);
 
   useEffect(() => {
@@ -417,7 +424,7 @@ const Sidebar = () => {
         <div className="overflow-y-auto w-full py-0 border-b border-b-dark-400">
           {rooms?.map((room: Room) => {
             const admin = room.members.find(
-              (user: any) => user.user._id !== currrentUser._id
+              (user: any) => user?.user?._id !== currrentUser?._id
             );
 
             return (
@@ -440,9 +447,9 @@ const Sidebar = () => {
                     color="green"
                     offset={[-5, 40]}
                   >
-                    {admin?.user.avatar ? (
+                    {admin?.user?.avatar ? (
                       <Avatar
-                        src={admin.user.avatar}
+                        src={admin?.user?.avatar}
                         // icon={<FaRegUser />}
                         size={48}
                         className="border border-gray-400 m-0"
@@ -460,7 +467,7 @@ const Sidebar = () => {
 
                 <div className="hidden lg:block text-left min-w-0">
                   <div className="font-medium truncate">
-                    {admin?.user.fullName}
+                    {admin?.user?.fullName}
                   </div>
                   <div className="text-gray-400 text-sm text-zinc-400 truncate">
                     {room?.lastMessage?.image
@@ -488,13 +495,13 @@ const Sidebar = () => {
               {/* Thông tin người dùng */}
               <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition cursor-pointer">
                 <Avatar
-                  src={selectedUser?.user.avatar}
+                  src={selectedUser?.user?.avatar}
                   icon={<FaRegUser />}
                   size={48}
                   className="border border-gray-300"
                 />
                 <h1 className="text-lg lg:text-xl font-semibold text-gray-800">
-                  {selectedUser?.user.fullName}
+                  {selectedUser?.user?.fullName}
                 </h1>
               </div>
 
@@ -697,7 +704,7 @@ const Sidebar = () => {
             {/* Top: Avatar + Action Circles */}
             <div className="p-5 flex flex-col items-center border-b border-gray-200 gap-3 bg-gradient-to-b from-gray-100 to-white">
               <Avatar
-                src={selectedUser?.user.avatar}
+                src={selectedUser?.user?.avatar}
                 size={72}
                 className="border-2 border-violet-200 shadow-sm"
               />
