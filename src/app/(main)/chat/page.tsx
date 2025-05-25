@@ -27,6 +27,7 @@ import { cn } from "@/config/utils";
 import reactionOptions from "@/constants/reaction";
 import { Pencil, Trash2 } from "lucide-react";
 import UserDetailModal from "./UserDetailModal";
+import { get } from "http";
 
 interface Message {
   reactions: any;
@@ -148,6 +149,7 @@ const Sidebar = () => {
     if (socket) {
       socket.on("newMessage", (newMessage: any) => {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
+        getRooms();
       });
 
       socket.on("updatedMessage", (updatedMessage: any) => {
@@ -271,6 +273,7 @@ const Sidebar = () => {
       }
       await Promise.all(requests);
       getRoomById(roomId, selectedUser);
+      getRooms();
     } catch (err: any) {
       toast.error(err);
     }
@@ -490,17 +493,11 @@ const Sidebar = () => {
                     {admin?.user?.fullName}
                   </div>
                   <div className="text-gray-400 text-sm text-zinc-400 truncate">
-                    {room?.lastMessage
-                      ? room.lastMessage.image
-                        ? room.lastMessage.sender?._id === currrentUser?._id
-                          ? "Bạn đã gửi một ảnh"
-                          : `${room.lastMessage.sender?.fullName} đã gửi một ảnh`
-                        : room.lastMessage.text
-                          ? room.lastMessage.sender?._id === currrentUser?._id
-                            ? `Bạn: ${room.lastMessage.text}`
-                            : `${room.lastMessage.sender?.fullName}: ${room.lastMessage.text}`
-                          : "Chưa có tin nhắn"
-                      : "Chưa có tin nhắn"}
+                    {room?.lastMessage?.image
+                      ? room?.lastMessage?.sender?._id === currrentUser?._id
+                        ? "Bạn đã gửi một ảnh"
+                        : `${room?.lastMessage?.sender?.fullName} đã gửi một ảnh`
+                      : room?.lastMessage?.text || "Chưa có tin nhắn"}
                   </div>
                 </div>
               </button>

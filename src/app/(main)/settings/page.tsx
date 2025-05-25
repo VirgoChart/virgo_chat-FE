@@ -18,7 +18,6 @@ const PREVIEW_MESSAGES = [
 const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();
 
-  // Sync theme from localStorage on component mount
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("chat-theme");
     if (storedTheme && storedTheme !== theme) {
@@ -26,10 +25,9 @@ const SettingsPage = () => {
     }
   }, [theme, setTheme]);
 
-  // Apply the selected theme to the body or root element
   useEffect(() => {
     if (typeof window !== "undefined") {
-      document.body.setAttribute("data-theme", theme); // Set theme on body
+      document.body.setAttribute("data-theme", theme);
     }
   }, [theme]);
 
