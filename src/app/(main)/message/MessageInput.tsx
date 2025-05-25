@@ -93,12 +93,17 @@ const MessageInput = ({ roomId, sendMessage }: MessageInputProps) => {
           />
         </label>
 
-        {/* Ô nhập tin nhắn */}
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Nhập tin nhắn..."
           rows={1}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e);
+            }
+          }}
           className="flex-1 bg-white resize-none px-4 py-2 rounded-2xl border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm"
         />
 
