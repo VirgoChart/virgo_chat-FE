@@ -493,11 +493,17 @@ const Sidebar = () => {
                     {admin?.user?.fullName}
                   </div>
                   <div className="text-gray-400 text-sm text-zinc-400 truncate">
-                    {room?.lastMessage?.image
-                      ? room?.lastMessage?.sender?._id === currrentUser?._id
-                        ? "Bạn đã gửi một ảnh"
-                        : `${room?.lastMessage?.sender?.fullName} đã gửi một ảnh`
-                      : room?.lastMessage?.text || "Chưa có tin nhắn"}
+                    {room?.lastMessage
+                      ? room.lastMessage.image
+                        ? room.lastMessage.sender?._id === currrentUser?._id
+                          ? "Bạn đã gửi một ảnh"
+                          : `${room.lastMessage.sender?.fullName} đã gửi một ảnh`
+                        : room.lastMessage.text
+                          ? room.lastMessage.sender?._id === currrentUser?._id
+                            ? `Bạn: ${room.lastMessage.text}`
+                            : `${room.lastMessage.sender?.fullName}: ${room.lastMessage.text}`
+                          : "Chưa có tin nhắn"
+                      : "Chưa có tin nhắn"}
                   </div>
                 </div>
               </button>
