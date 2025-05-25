@@ -67,6 +67,8 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
     }
   };
 
+  console.log(notifications);
+
   const markAllAsSeen = async () => {
     try {
       const unseenIds = notifications
@@ -159,25 +161,46 @@ const NotificationDropdown = ({ socket }: NotificationDropdownProps) => {
                 }
               />
               <div className="flex gap-2">
-                <Button
-                  type="primary"
-                  size="small"
-                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition"
-                  onClick={() => handleUpdateStatus(item._id, "accepted")}
-                  disabled={item.receivers[0].status === "accepted"}
-                >
-                  Chấp nhận
-                </Button>
-                <Button
-                  type="default"
-                  size="small"
-                  danger
-                  className="bg-red-600 hover:bg-red-700 text-black text-xs px-2 py-1 rounded transition"
-                  onClick={() => handleUpdateStatus(item._id, "rejected")}
-                  disabled={item.receivers[0].status === "rejected"}
-                >
-                  Từ chối
-                </Button>
+                {item.receivers[0].status === "accepted" ? (
+                  <Button
+                    type="primary"
+                    size="small"
+                    className="bg-blue-600 text-white text-xs px-2 py-1 rounded transition cursor-default"
+                    disabled
+                  >
+                    Đã chấp nhận
+                  </Button>
+                ) : item.receivers[0].status === "rejected" ? (
+                  <Button
+                    type="default"
+                    size="small"
+                    danger
+                    className="bg-red-600 text-black text-xs px-2 py-1 rounded transition cursor-default"
+                    disabled
+                  >
+                    Đã từ chối
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      type="primary"
+                      size="small"
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded transition"
+                      onClick={() => handleUpdateStatus(item._id, "accepted")}
+                    >
+                      Chấp nhận
+                    </Button>
+                    <Button
+                      type="default"
+                      size="small"
+                      danger
+                      className="bg-red-600 hover:bg-red-700 text-black text-xs px-2 py-1 rounded transition"
+                      onClick={() => handleUpdateStatus(item._id, "rejected")}
+                    >
+                      Từ chối
+                    </Button>
+                  </>
+                )}
               </div>
             </List.Item>
           )}
