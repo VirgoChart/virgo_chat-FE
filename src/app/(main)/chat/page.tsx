@@ -27,6 +27,7 @@ import { cn } from "@/config/utils";
 import reactionOptions from "@/constants/reaction";
 import { Pencil, Trash2 } from "lucide-react";
 import UserDetailModal from "./UserDetailModal";
+import { get } from "http";
 
 interface Message {
   reactions: any;
@@ -148,6 +149,7 @@ const Sidebar = () => {
     if (socket) {
       socket.on("newMessage", (newMessage: any) => {
         setMessages((prevMessages) => [...prevMessages, newMessage]);
+        getRooms();
       });
 
       socket.on("updatedMessage", (updatedMessage: any) => {
@@ -271,6 +273,7 @@ const Sidebar = () => {
       }
       await Promise.all(requests);
       getRoomById(roomId, selectedUser);
+      getRooms();
     } catch (err: any) {
       toast.error(err);
     }

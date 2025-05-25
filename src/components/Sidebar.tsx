@@ -137,9 +137,11 @@ const Sidebar = () => {
         }
       );
 
-      toast.success(response.message);
+      toast.success("Tin nhắn đã được gửi thành công");
 
+      console.log("sau khi gửi tin nhắn: ", response);
       getRoomById(roomId);
+      getRooms();
     } catch (err: any) {
       toast.error(err);
     }
