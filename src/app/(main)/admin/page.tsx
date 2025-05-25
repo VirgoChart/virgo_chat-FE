@@ -145,14 +145,14 @@ const AdminPage = () => {
                 <div className="flex flex-wrap gap-2 mt-1">
                   {members.map(({ user, role }, idx) => (
                     <div key={idx} className="flex items-center space-x-2">
-                      {user.avatar && (
+                      {user?.avatar && (
                         <img
-                          src={user.avatar}
-                          alt={user.fullName}
+                          src={user?.avatar}
+                          alt={user?.fullName}
                           className="w-8 h-8 rounded-full object-cover"
                         />
                       )}
-                      <span>{user.fullName}</span>
+                      <span>{user?.fullName}</span>
                       <span className="text-xs text-gray-400">({role})</span>
                     </div>
                   ))}
@@ -160,8 +160,8 @@ const AdminPage = () => {
               </div>
               <div className="text-sm text-gray-600">
                 Last Message:{" "}
-                <span className="font-medium">{lastMessage.text}</span> by{" "}
-                <span className="italic">{lastMessage.sender.fullName}</span>
+                <span className="font-medium">{lastMessage?.text}</span> by{" "}
+                <span className="italic">{lastMessage?.sender?.fullName}</span>
               </div>
             </div>
           ))}

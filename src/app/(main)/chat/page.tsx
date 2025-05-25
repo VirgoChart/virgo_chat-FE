@@ -70,6 +70,26 @@ const Sidebar = () => {
   const [isUserDetailModalOpen, setIsUserDetailModalOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const reactionMenuRef = useRef(null);
+  const [reactionMenuId, setReactionMenuId] = useState<string | null>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        reactionMenuRef.current &&
+        !reactionMenuRef.current.contains(event.target as Node)
+      ) {
+        setReactionMenuId(null);
+      }
+    };
+
+    if (reactionMenuId) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [reactionMenuId]);
 
   let isCaller = incomingCall?.caller._id === currrentUser._id;
 
@@ -104,14 +124,18 @@ const Sidebar = () => {
       setBlockedUsers(room?.blockedMembers || []);
       setSelectedRoom(room || null);
 
-      setAnotherUser(room?.members[1]);
+      const currentUserId = authUser?._id;
+
+      const anotherUser = room?.members.find(
+        (member: any) => member?.user?._id !== currentUserId
+      );
+      setAnotherUser(anotherUser);
     } catch (error: any) {
       toast.error("Lỗi lấy dữ liệu phòng");
     }
   };
 
-  console.log("currrentUser", currrentUser);
-  console.log("anotherUser", anotherUser);
+  console.log("anotherUser: ", anotherUser);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -254,7 +278,6 @@ const Sidebar = () => {
 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editedText, setEditedText] = useState<string>("");
-  const [reactionMenuId, setReactionMenuId] = useState<string | null>(null);
 
   const handleUpdate = async (messageId: string) => {
     try {
@@ -308,7 +331,6 @@ const Sidebar = () => {
           <p>Lỗi hiển thị tin nhắn</p>
         )}
 
-        {/* Hiển thị reaction nếu có */}
         {message.reactions?.length > 0 && (
           <div className="flex items-center gap-1 mt-1">
             {message.reactions.map((reaction: any, index: number) => {
@@ -410,13 +432,11 @@ const Sidebar = () => {
       <aside className="h-[550px] overflow-y-auto w-20 lg:w-72 border border-gray-300 flex flex-col transition-all duration-200 mt-10 rounded-l-xl">
         <div className="border-b border-gray-300 w-full py-4 px-5 lg:block hidden">
           <div className="items-center gap-2 justify-between lg:flex hidden">
-            <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
+            <div className="flex items-center gap-2 rounded-lg p-2">
               <Users className="size-6" />
-              <span className="font-medium hidden lg:block">Bạn bè</span>
-            </div>
-            <div className="flex items-center gap-2 border border-gray-300 rounded-lg p-2 cursor-pointer">
-              <Users className="size-6" />
-              <span className="font-medium hidden lg:block">Nhóm</span>
+              <span className="font-medium hidden lg:block">
+                Danh sách bạn bè
+              </span>
             </div>
           </div>
         </div>
@@ -471,7 +491,9 @@ const Sidebar = () => {
                   </div>
                   <div className="text-gray-400 text-sm text-zinc-400 truncate">
                     {room?.lastMessage?.image
-                      ? "Đã gửi một ảnh"
+                      ? room?.lastMessage?.sender?._id === currrentUser?._id
+                        ? "Bạn đã gửi một ảnh"
+                        : `${room?.lastMessage?.sender?.fullName} đã gửi một ảnh`
                       : room?.lastMessage?.text || "Chưa có tin nhắn"}
                   </div>
                 </div>
@@ -492,7 +514,6 @@ const Sidebar = () => {
           <div className="flex flex-col h-[550px] w-full mt-10 border">
             {/* Vung detail user*/}
             <div className="h-auto w-full border-b border-gray-200 py-1 px-6 flex justify-between items-center bg-white shadow-sm">
-              {/* Thông tin người dùng */}
               <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition cursor-pointer">
                 <Avatar
                   src={selectedUser?.user?.avatar}
@@ -574,7 +595,10 @@ const Sidebar = () => {
 
                     {/* Menu Emoji Reaction */}
                     {reactionMenuId === message._id && (
-                      <div className="absolute top-0 right-10 flex gap-1 bg-white p-2 rounded-lg shadow-lg border z-10">
+                      <div
+                        ref={reactionMenuRef}
+                        className="absolute top-0 right-10 flex gap-1 bg-white p-2 rounded-lg shadow-lg border z-10"
+                      >
                         {reactionOptions.map((reaction) => (
                           <button
                             key={reaction.type}

@@ -187,7 +187,7 @@ const Navbar = () => {
     try {
       setRequestText("Đang chờ xác nhận ...");
       const res = await axiosRequest.post(
-        "/notifications/create",
+        "/notifications",
         {
           receiverIds: [userInfo._id],
           roomType: "private",

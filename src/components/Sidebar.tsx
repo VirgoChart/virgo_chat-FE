@@ -218,7 +218,9 @@ const Sidebar = () => {
               <div className="hidden lg:block text-left min-w-0">
                 <div className="font-medium truncate">{room?.name}</div>
                 <div className="text-sm text-zinc-400 truncate">
-                  {room?.lastMessage?.text || "Chưa có tin nhắn"}
+                  {room?.lastMessage?.image
+                    ? "Đã gửi một ảnh hihihihihi"
+                    : room?.lastMessage?.text || "Chưa có tin nhắn"}
                 </div>
               </div>
             </button>
